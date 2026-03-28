@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>關西櫻花之旅 - 伯鴻終極修復</title>
+    <title>關西櫻花之旅 </title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
@@ -36,14 +36,14 @@
 <body class="h-screen flex flex-col overflow-hidden relative text-gray-900">
 
     <div id="user-overlay" class="fixed inset-0 bg-white z-[300] flex flex-col items-center justify-center p-10 hidden">
-        <h2 class="text-2xl font-black mb-8 text-emerald-600 italic">WHO ARE YOU?</h2>
+        <h2 class="text-2xl font-black mb-8 text-emerald-600">你是誰？</h2>
         <div id="user-selector-grid" class="grid grid-cols-2 gap-4 w-full"></div>
     </div>
 
     <header class="bg-white px-6 pb-5 flex justify-between items-center border-b border-gray-100 shadow-sm z-10">
-        <div id="header-title-btn" class="cursor-pointer">
+        <div id="header-title-btn">
             <h1 class="text-xl font-black tracking-tight">🌸 關西櫻花之旅</h1>
-            <p id="user-info-text" class="text-[9px] font-bold text-emerald-600 mt-0.5 uppercase tracking-widest italic">連線中...</p>
+            <p id="user-info-text" class="text-[9px] font-bold text-emerald-600 mt-0.5 uppercase tracking-widest italic">初始化中...</p>
         </div>
         <div id="day-badge" class="bg-emerald-50 px-3 py-1.5 rounded-2xl text-emerald-600 text-xs font-black italic text-right">
             第 <span id="header-day-num">1</span> 天<br>
@@ -62,17 +62,17 @@
         <section id="page-itinerary" class="page-content active px-6 py-6"><div id="itinerary-list" class="space-y-8"></div></section>
         <section id="page-checklist" class="page-content px-6 py-8"><h2 class="text-xl font-black mb-6 text-emerald-700">🧳 我的行李 (私有)</h2><div id="checklist-list" class="space-y-3"></div></section>
         <section id="page-budget" class="page-content px-6 py-8">
-            <h2 class="text-xl font-black mb-6">💰 支出與分帳</h2>
+            <h2 class="text-xl font-black mb-6 text-emerald-700">💰 支出與分帳</h2>
             <div class="bg-white p-6 rounded-[2rem] card-shadow border border-gray-50 text-center mb-6 grid grid-cols-2 gap-4 divide-x">
                 <div><p class="text-gray-400 text-[10px] font-bold mb-1 uppercase">今日支出</p><p id="disp-today-cost" class="text-xl font-black text-emerald-600">¥0</p></div>
-                <div><p class="text-gray-400 text-[10px] font-bold mb-1 uppercase">累積總額</p><p id="disp-total-cost" class="text-xl font-black text-blue-600">¥0</p></div>
+                <div><p class="text-gray-400 text-[10px] font-bold mb-1 uppercase">旅程總結</p><p id="disp-total-cost" class="text-xl font-black text-blue-600">¥0</p></div>
             </div>
             <div id="budget-list" class="space-y-4"></div>
         </section>
-        <section id="page-notes" class="page-content px-6 py-8"><h2 class="text-xl font-black mb-6 text-amber-600">📓 旅行筆記</h2><div id="notes-list" class="space-y-4"></div></section>
+        <section id="page-notes" class="page-content px-6 py-8"><h2 class="text-xl font-black mb-6 text-amber-600">📓 攻略筆記</h2><div id="notes-list" class="space-y-4"></div></section>
     </main>
 
-    <button id="fab-add" class="fixed bottom-32 right-6 w-16 h-16 bg-emerald-600 text-white rounded-full shadow-lg flex items-center justify-center transition-all active:scale-90 z-[100] cursor-pointer">
+    <button id="fab-add" class="fixed bottom-32 right-6 w-16 h-16 bg-emerald-600 text-white rounded-full shadow-lg flex items-center justify-center transition-all active:scale-90 z-[100]">
         <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
     </button>
 
@@ -96,9 +96,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getDatabase, ref, onValue, set as fbSet } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-        // Firebase 初始化
         const firebaseConfig = { databaseURL: "https://kansai-trip-6ae98-default-rtdb.firebaseio.com/" };
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
@@ -110,14 +109,16 @@
         
         let currentUser = localStorage.getItem('BH_User_v5') || null;
         let currentDay = 1, currentPage = 'itinerary', editIndex = -1, editItemType = null;
-        
-        let tripData = DATES.map((d, i) => ({ day: i+1, activities: [] }));
+        let tripData = DATES.map((d, i) => ({ day: i+1, date: d, activities: [] }));
         let notes = [], publicSpendings = [];
         let privateChecklist = JSON.parse(localStorage.getItem('BH_Check_v5')) || [{ text: "護照", done: false }];
         let privateSpendings = JSON.parse(localStorage.getItem('BH_Spend_v5')) || [];
 
-        // --- 核心同步與渲染 ---
+        // --- 核心同步 ---
         const syncAndRender = () => {
+            if (!currentUser) { showUserOverlay(); return; }
+            document.getElementById('user-overlay').classList.add('hidden');
+            document.getElementById('user-info-text').innerText = `目前使用者：${currentUser}`;
             document.getElementById('header-day-num').innerText = currentDay;
             document.getElementById('header-date-str').innerText = DATES[currentDay-1];
             
@@ -135,15 +136,14 @@
             else if (currentPage === 'notes') renderNotes();
         };
 
-        // 監聽雲端資料
         onValue(ref(db, 'tripData'), (s) => { if(s.val()) { tripData = s.val(); syncAndRender(); } });
         onValue(ref(db, 'notes'), (s) => { if(s.val()) { notes = s.val(); syncAndRender(); } });
         onValue(ref(db, 'publicSpend'), (s) => { if(s.val()) { publicSpendings = s.val(); syncAndRender(); } });
 
         const saveToCloud = (t) => {
-            if(t==='itinerary') set(ref(db, 'tripData'), tripData);
-            if(t==='notes') set(ref(db, 'notes'), notes);
-            if(t==='publicSpend') set(ref(db, 'publicSpend'), publicSpendings);
+            if(t==='itinerary') fbSet(ref(db, 'tripData'), tripData);
+            if(t==='notes') fbSet(ref(db, 'notes'), notes);
+            if(t==='publicSpend') fbSet(ref(db, 'publicSpend'), publicSpendings);
         };
 
         const formatTime = (v) => {
@@ -152,15 +152,11 @@
             return d.length>=4 ? d.substring(0,2)+":"+d.substring(2,4) : "00:00";
         };
 
+        // --- 渲染子函式 ---
         function renderDayTabs() {
             const nav = document.getElementById('day-tabs-nav');
-            nav.innerHTML = DATES.map((d, i) => `
-                <button class="day-tab-trigger flex-shrink-0 px-5 py-2 rounded-2xl text-xs font-black flex flex-col items-center ${currentDay === i+1 ? 'active-tab' : 'bg-gray-100 text-gray-400'}" data-day="${i+1}">
-                    <span>Day ${i+1}</span><span class="text-[8px] opacity-60">${d}</span>
-                </button>`).join('');
-            nav.querySelectorAll('.day-tab-trigger').forEach(btn => {
-                btn.onclick = () => { currentDay = parseInt(btn.dataset.day); syncAndRender(); };
-            });
+            nav.innerHTML = DATES.map((d, i) => `<button class="day-tab-trigger flex-shrink-0 px-5 py-2 rounded-2xl text-xs font-black flex flex-col items-center ${currentDay === i+1 ? 'active-tab' : 'bg-gray-100 text-gray-400'}" data-day="${i+1}"><span>Day ${i+1}</span><span class="text-[8px] opacity-60">${d}</span></button>`).join('');
+            nav.querySelectorAll('.day-tab-trigger').forEach(btn => { btn.onclick = () => { currentDay = parseInt(btn.dataset.day); syncAndRender(); }; });
         }
 
         function renderItinerary() {
@@ -169,20 +165,15 @@
             list.innerHTML = dayActs.map((a, i) => `
                 <div class="flex items-start space-x-4">
                     <div class="flex flex-col items-center mt-1">
-                        <div class="w-10 h-10 rounded-full border-4 border-white shadow-md flex items-center justify-center text-white timeline-dot-${a.type}">
-                            <span class="text-xs">${ICONS[a.type] || "📍"}</span>
-                        </div>
+                        <div class="w-10 h-10 rounded-full border-4 border-white shadow-md flex items-center justify-center text-white timeline-dot-${a.type}"><span class="text-xs">${ICONS[a.type] || "📍"}</span></div>
                         <span class="text-[9px] font-black text-gray-400 mt-2">${a.time}</span>
                     </div>
                     <div class="flex-grow bg-white rounded-3xl p-5 card-shadow border border-gray-50 relative">
-                        <div class="absolute top-4 right-4 flex space-x-2">
-                            <button class="edit-item-btn icon-btn text-emerald-600" data-idx="${i}" data-mode="itinerary">✎</button>
-                            <button class="del-item-btn icon-btn text-red-400" data-idx="${i}" data-mode="itinerary">✕</button>
-                        </div>
-                        <h3 class="font-black text-gray-900">${a.title}</h3>
+                        <div class="absolute top-4 right-4 flex space-x-2"><button class="edit-btn icon-btn text-emerald-600" data-idx="${i}" data-mode="itinerary">✎</button><button class="del-btn icon-btn text-red-400" data-idx="${i}" data-mode="itinerary">✕</button></div>
+                        <h3 class="font-black text-gray-900 pr-12">${a.title}</h3>
                         <span class="text-[9px] px-2 py-0.5 rounded-full font-black type-tag-${a.type} mt-1 inline-block uppercase italic">${a.type}</span>
                         ${a.note ? `<div class="hashtag-red"># ${a.note}</div>` : ''}
-                        <div class="flex justify-between items-center mt-4 pt-3 border-t border-gray-50"><span class="text-[10px] font-black text-gray-400">¥${a.cost.toLocaleString()}</span><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(a.address || a.title)}" target="_blank" class="px-3 py-1 bg-emerald-50 rounded-xl text-emerald-600 text-[10px] font-black">導航</a></div>
+                        <div class="flex justify-between items-center mt-4 border-t border-gray-50 pt-3"><span class="text-[10px] font-black text-gray-400">¥${a.cost.toLocaleString()}</span><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(a.address || a.title)}" target="_blank" class="px-3 py-1 bg-emerald-50 rounded-xl text-emerald-600 text-[10px] font-black">導航</a></div>
                     </div>
                 </div>`).join('') || `<p class="text-center text-gray-300 py-10 italic">Day ${currentDay} 無行程</p>`;
             bindEditDel(list);
@@ -194,43 +185,22 @@
                 publicSpendings.filter(x=>x.day===d && x.parts?.includes(currentUser)).forEach(x=>s+=Math.round(x.cost/(x.parts.length||1)));
                 s+=privateSpendings.filter(x=>x.day===d).reduce((a,b)=>a+(b.cost||0),0); return s;
             })(currentDay);
-            
-            let totalCost = 0; for(let i=1; i<=8; i++) {
-                totalCost += (tripData[i-1]?.activities||[]).reduce((a,b)=>a+(b.cost||0),0);
-                publicSpendings.filter(x=>x.day===i && x.parts?.includes(currentUser)).forEach(x=>totalCost+=Math.round(x.cost/(x.parts.length||1)));
-                totalCost += privateSpendings.filter(x=>x.day===i).reduce((a,b)=>a+(b.cost||0),0);
+            let total = 0; for(let i=1; i<=8; i++){
+                total += (tripData[i-1]?.activities||[]).reduce((a,b)=>a+(b.cost||0),0);
+                publicSpendings.filter(x=>x.day===i && x.parts?.includes(currentUser)).forEach(x=>total+=Math.round(x.cost/(x.parts.length||1)));
+                total += privateSpendings.filter(x=>x.day===i).reduce((a,b)=>a+(b.cost||0),0);
             }
-
             document.getElementById('disp-today-cost').innerText = `¥${todayCost.toLocaleString()}`;
-            document.getElementById('disp-total-cost').innerText = `¥${totalCost.toLocaleString()}`;
+            document.getElementById('disp-total-cost').innerText = `¥${total.toLocaleString()}`;
 
             const list = document.getElementById('budget-list');
             const dayPub = publicSpendings.filter(s => s.day === currentDay);
             const dayPriv = privateSpendings.filter(s => s.day === currentDay);
 
             list.innerHTML = [
-                ...dayPub.map(s => `
-                    <div class="flex items-center space-x-3 ${s.done ? 'settled' : ''}">
-                        <input type="checkbox" class="sync-check-box w-6 h-6 accent-emerald-600" ${s.done ? 'checked' : ''} data-realidx="${publicSpendings.indexOf(s)}">
-                        <div class="flex-grow bg-blue-50/50 p-5 rounded-3xl border-2 border-blue-100 relative">
-                            <div class="absolute top-4 right-4 flex space-x-2">
-                                <button class="edit-item-btn icon-btn" data-idx="${publicSpendings.indexOf(s)}" data-mode="pub">✎</button>
-                                <button class="del-item-btn icon-btn" data-idx="${publicSpendings.indexOf(s)}" data-mode="pub">✕</button>
-                            </div>
-                            <h4 class="font-black text-gray-800">${s.title} <span class="text-blue-600 ml-2">¥${s.cost.toLocaleString()}</span></h4>
-                            <p class="text-[9px] font-bold text-blue-400">由 ${s.payer} 代墊 | 應付: <span class="text-emerald-600">¥${Math.round(s.cost/(s.parts.length||1))}</span></p>
-                        </div>
-                    </div>`),
-                ...dayPriv.map(s => `
-                    <div class="bg-white p-5 rounded-3xl card-shadow border border-gray-100 relative">
-                        <div class="absolute top-4 right-4 flex space-x-2">
-                            <button class="edit-item-btn icon-btn" data-idx="${privateSpendings.indexOf(s)}" data-mode="pri">✎</button>
-                            <button class="del-item-btn icon-btn" data-idx="${privateSpendings.indexOf(s)}" data-mode="pri">✕</button>
-                        </div>
-                        <h4 class="font-black text-gray-800">${s.title} <span>¥${s.cost.toLocaleString()}</span></h4>
-                        <p class="text-[9px] font-bold text-gray-400 uppercase">私密項目</p>
-                    </div>`)
-            ].join('') || `<p class="text-center text-gray-300 py-10 italic">No records</p>`;
+                ...dayPub.map(s => `<div class="flex items-center space-x-3 ${s.done ? 'settled' : ''}"><input type="checkbox" class="sync-check-box w-6 h-6 accent-emerald-600" ${s.done ? 'checked' : ''} data-realidx="${publicSpendings.indexOf(s)}"><div class="flex-grow bg-blue-50/50 p-5 rounded-3xl border-2 border-blue-100 relative"><div class="absolute top-4 right-4 flex space-x-2"><button class="edit-btn icon-btn" data-idx="${publicSpendings.indexOf(s)}" data-mode="pub">✎</button><button class="del-btn icon-btn" data-idx="${publicSpendings.indexOf(s)}" data-mode="pub">✕</button></div><h4 class="font-black">${s.title} <span class="text-blue-600">¥${s.cost.toLocaleString()}</span></h4><p class="text-[9px] font-bold text-blue-400 uppercase italic">由 ${s.payer} 代墊 | 應付: <span class="text-emerald-600 font-black">¥${Math.round(s.cost/(s.parts.length||1))}</span></p></div></div>`),
+                ...dayPriv.map(s => `<div class="bg-white p-5 rounded-3xl card-shadow border border-gray-100 relative"><div class="absolute top-4 right-4 flex space-x-2"><button class="edit-btn icon-btn" data-idx="${privateSpendings.indexOf(s)}" data-mode="pri">✎</button><button class="del-btn icon-btn" data-idx="${privateSpendings.indexOf(s)}" data-mode="pri">✕</button></div><h4 class="font-black text-gray-800">${s.title} <span class="text-emerald-600">¥${s.cost.toLocaleString()}</span></h4><p class="text-[9px] font-bold text-gray-400 uppercase italic">個人私密帳務</p></div>`)
+            ].join('') || `<p class="text-center text-gray-300 py-10 italic uppercase">No records</p>`;
 
             list.querySelectorAll('.sync-check-box').forEach(ck => ck.onchange = () => { publicSpendings[ck.dataset.realidx].done = ck.checked; saveToCloud('publicSpend'); });
             bindEditDel(list);
@@ -238,21 +208,26 @@
 
         function renderChecklist() {
             const list = document.getElementById('checklist-list');
-            list.innerHTML = privateChecklist.map((item, i) => `<div class="flex items-center bg-white p-4 rounded-2xl card-shadow border border-gray-50"><label class="flex items-center flex-grow space-x-3"><input type="checkbox" ${item.done ? 'checked' : ''} class="check-trigger w-5 h-5 accent-emerald-600" data-idx="${i}"><span class="text-sm font-black ${item.done ? 'text-gray-300 line-through' : ''}">${item.text}</span></label><button class="del-item-btn icon-btn" data-idx="${i}" data-mode="check">✕</button></div>`).join('');
+            list.innerHTML = privateChecklist.map((item, i) => `<div class="flex items-center bg-white p-4 rounded-2xl card-shadow border border-gray-50"><label class="flex items-center flex-grow space-x-3"><input type="checkbox" ${item.done ? 'checked' : ''} class="check-trigger w-5 h-5 accent-emerald-600" data-idx="${i}"><span class="text-sm font-black ${item.done ? 'text-gray-300 line-through italic' : ''}">${item.text}</span></label><button class="del-btn icon-btn" data-idx="${i}" data-mode="check">✕</button></div>`).join('');
             list.querySelectorAll('.check-trigger').forEach(ck => ck.onchange = () => { privateChecklist[ck.dataset.idx].done = ck.checked; localStorage.setItem('BH_Check_v5', JSON.stringify(privateChecklist)); syncAndRender(); });
             bindEditDel(list);
         }
 
         function renderNotes() {
             const list = document.getElementById('notes-list');
-            list.innerHTML = notes.map((n, i) => `<div class="bg-white p-5 rounded-3xl card-shadow border border-gray-100 relative"><div class="absolute top-4 right-4 flex space-x-2"><button class="edit-item-btn icon-btn text-emerald-600" data-idx="${i}" data-mode="note">✎</button><button class="del-item-btn icon-btn" data-idx="${i}" data-mode="note">✕</button></div><h4 class="font-black text-gray-900 pr-12 text-lg mb-2">${n.title}</h4>${n.link ? `<a href="${n.link}" target="_blank" class="inline-block px-4 py-2 bg-blue-50 rounded-xl text-blue-600 text-[10px] font-black italic">開啟網址 🌐</a>` : ''}</div>`).join('');
+            list.innerHTML = notes.map((n, i) => `<div class="bg-white p-5 rounded-3xl card-shadow border border-gray-100 relative"><div class="absolute top-4 right-4 flex space-x-2"><button class="edit-btn icon-btn text-emerald-600" data-idx="${i}" data-mode="note">✎</button><button class="del-btn icon-btn" data-idx="${i}" data-mode="note">✕</button></div><h4 class="font-black text-gray-900 pr-12 text-lg mb-2">${n.title}</h4>${n.link ? `<a href="${n.link}" target="_blank" class="inline-block px-4 py-2 bg-blue-50 rounded-xl text-blue-600 text-[10px] font-black italic">開啟連結 🌐</a>` : ''}</div>`).join('');
             bindEditDel(list);
         }
 
+        // --- 綁定編輯與刪除 ---
         function bindEditDel(parent) {
-            parent.querySelectorAll('.edit-item-btn').forEach(b => b.onclick = () => { editIndex = parseInt(b.dataset.idx); editItemType = b.dataset.mode; handleFab(); });
-            parent.querySelectorAll('.del-item-btn').forEach(b => b.onclick = () => {
-                if(!confirm("刪除？")) return;
+            parent.querySelectorAll('.edit-btn').forEach(b => b.onclick = () => { 
+                editIndex = parseInt(b.dataset.idx); 
+                editItemType = b.dataset.mode; 
+                openAddModal(); 
+            });
+            parent.querySelectorAll('.del-btn').forEach(b => b.onclick = () => {
+                if(!confirm("確定刪除？")) return;
                 const i = parseInt(b.dataset.idx); const m = b.dataset.mode;
                 if(m==='itinerary') { tripData[currentDay-1].activities.splice(i,1); saveToCloud('itinerary'); }
                 else if(m==='pub') { publicSpendings.splice(i,1); saveToCloud('publicSpend'); }
@@ -262,23 +237,24 @@
             });
         }
 
-        function handleFab() {
+        // --- 彈窗處理 ---
+        function openAddModal() {
             const container = document.getElementById('modal-fields-container');
             const title = document.getElementById('modal-title-text');
             title.innerText = editIndex === -1 ? "✨ 新增項目" : "✎ 編輯項目";
             
             if (currentPage === 'itinerary') {
-                container.innerHTML = `<div class="grid grid-cols-2 gap-2"><input id="in-time" type="text" placeholder="0900" class="f-input"><select id="in-type" class="f-input"><option>景點</option><option>美食</option><option>購物</option><option>移動</option></select></div><input id="in-title" type="text" placeholder="行程名稱" class="f-input"><input id="in-note" type="text" placeholder="紅標籤" class="f-input"><input id="in-address" type="text" placeholder="地址" class="f-input"><input id="in-cost" type="number" placeholder="費用" class="f-input">`;
+                container.innerHTML = `<div class="grid grid-cols-2 gap-2"><input id="in-time" type="text" placeholder="0900" class="f-input"><select id="in-type" class="f-input"><option>景點</option><option>美食</option><option>購物</option><option>移動</option></select></div><input id="in-title" type="text" placeholder="行程名稱" class="f-input"><input id="in-note" type="text" placeholder="標籤備註" class="f-input"><input id="in-address" type="text" placeholder="詳細地址或名稱" class="f-input"><input id="in-cost" type="number" placeholder="費用(日幣)" class="f-input">`;
                 if(editIndex !== -1) { let a=tripData[currentDay-1].activities[editIndex]; document.getElementById('in-time').value=a.time; document.getElementById('in-title').value=a.title; document.getElementById('in-address').value=a.address||""; document.getElementById('in-cost').value=a.cost; document.getElementById('in-note').value=a.note||""; document.getElementById('in-type').value=a.type; }
             } else if (currentPage === 'checklist') {
-                container.innerHTML = `<input id="in-check-text" type="text" placeholder="項目" class="f-input">`;
+                container.innerHTML = `<input id="in-check-text" type="text" placeholder="項目名稱" class="f-input">`;
                 if(editIndex !== -1) document.getElementById('in-check-text').value = privateChecklist[editIndex].text;
             } else if (currentPage === 'budget') {
                 container.innerHTML = `<input id="in-spend-title" type="text" placeholder="項目" class="f-input"><input id="in-spend-cost" type="number" placeholder="金額" class="f-input"><p class="text-[10px] font-black text-gray-400 mt-2 uppercase">墊款人</p><select id="in-payer" class="f-input">${MEMBERS.map(m=>`<option>${m}</option>`).join('')}</select><div class="flex items-center justify-between py-2"><span class="text-xs font-black">是否分帳？</span><input type="checkbox" id="is-split" checked class="w-5 h-5 accent-emerald-600"></div><div id="part-ui" class="space-y-2"><div class="flex flex-wrap gap-2">${MEMBERS.map(m=>`<div class="chip member-chip" data-m="${m}">${m}</div>`).join('')}</div></div>`;
-                const splitBox = document.getElementById('is-split');
-                const partUI = document.getElementById('part-ui');
-                splitBox.onchange = () => partUI.style.display = splitBox.checked ? 'block' : 'none';
-                document.querySelectorAll('.chip').forEach(c => {
+                const box = document.getElementById('is-split');
+                const pUI = document.getElementById('part-ui');
+                box.onchange = () => pUI.style.display = box.checked ? 'block' : 'none';
+                document.querySelectorAll('.member-chip').forEach(c => {
                     c.onclick = () => c.classList.toggle('selected');
                     if(editIndex !== -1) {
                         let s = (editItemType === 'pub') ? publicSpendings[editIndex] : privateSpendings[editIndex];
@@ -287,16 +263,16 @@
                 });
                 if(editIndex !== -1) {
                     let s = (editItemType === 'pub') ? publicSpendings[editIndex] : privateSpendings[editIndex];
-                    document.getElementById('in-spend-title').value=s.title; document.getElementById('in-spend-cost').value=s.cost; document.getElementById('in-payer').value=s.payer; document.getElementById('is-split').checked = s.isSplit; partUI.style.display = s.isSplit ? 'block' : 'none';
+                    document.getElementById('in-spend-title').value=s.title; document.getElementById('in-spend-cost').value=s.cost; document.getElementById('in-payer').value=s.payer; document.getElementById('is-split').checked = s.isSplit; pUI.style.display = s.isSplit ? 'block' : 'none';
                 }
             } else if (currentPage === 'notes') {
-                container.innerHTML = `<input id="in-note-title" type="text" placeholder="標題" class="f-input"><input id="in-note-link" type="text" placeholder="網址" class="f-input">`;
+                container.innerHTML = `<input id="in-note-title" type="text" placeholder="標題" class="f-input"><input id="in-note-link" type="text" placeholder="網址 https://..." class="f-input">`;
                 if(editIndex !== -1) { document.getElementById('in-note-title').value=notes[editIndex].title; document.getElementById('in-note-link').value=notes[editIndex].link; }
             }
             document.getElementById('add-modal').classList.add('active');
         }
 
-        function save() {
+        function handleSave() {
             if(currentPage === 'itinerary') {
                 const entry = { time: formatTime(document.getElementById('in-time').value), title: document.getElementById('in-title').value||"未命名", type: document.getElementById('in-type').value, note: document.getElementById('in-note').value, cost: parseInt(document.getElementById('in-cost').value)||0, address: document.getElementById('in-address').value };
                 if(editIndex === -1) tripData[currentDay-1].activities.push(entry); else tripData[currentDay-1].activities[editIndex] = entry;
@@ -305,7 +281,7 @@
                 const t = document.getElementById('in-check-text').value; if(t) { if(editIndex === -1) privateChecklist.push({text:t,done:false}); else privateChecklist[editIndex].text=t; } localStorage.setItem('BH_Check_v5', JSON.stringify(privateChecklist)); syncAndRender();
             } else if(currentPage === 'budget') {
                 const split = document.getElementById('is-split').checked;
-                const parts = []; if(split) document.querySelectorAll('.chip.selected').forEach(c=>parts.push(c.dataset.m));
+                const parts = []; if(split) document.querySelectorAll('.member-chip.selected').forEach(c=>parts.push(c.dataset.m));
                 const entry = { day: currentDay, title: document.getElementById('in-spend-title').value, cost: parseInt(document.getElementById('in-spend-cost').value)||0, payer: document.getElementById('in-payer').value, isSplit: split, parts, done: false };
                 if(split) { if(editIndex === -1) publicSpendings.push(entry); else publicSpendings[editIndex] = entry; saveToCloud('publicSpend'); }
                 else { if(editIndex === -1) privateSpendings.push(entry); else privateSpendings[editIndex] = entry; localStorage.setItem('BH_Spend_v5', JSON.stringify(privateSpendings)); syncAndRender(); }
@@ -325,20 +301,23 @@
             grid.querySelectorAll('.user-pick').forEach(btn => btn.onclick = () => { localStorage.setItem('BH_User_v5', btn.dataset.user); location.reload(); });
         }
 
-        // --- 初始化功能 ---
-        document.getElementById('nav-itinerary').onclick = () => { currentPage = 'itinerary'; updateNav('nav-itinerary'); syncAndRender(); };
-        document.getElementById('nav-checklist').onclick = () => { currentPage = 'checklist'; updateNav('nav-checklist'); syncAndRender(); };
-        document.getElementById('nav-budget').onclick = () => { currentPage = 'budget'; updateNav('nav-budget'); syncAndRender(); };
-        document.getElementById('nav-notes').onclick = () => { currentPage = 'notes'; updateNav('nav-notes'); syncAndRender(); };
-        
-        document.getElementById('fab-add').onclick = () => handleFab();
-        document.getElementById('modal-cancel-btn').onclick = () => closeModal();
-        document.getElementById('modal-save-btn').onclick = () => save();
-        document.getElementById('header-title-btn').onclick = () => { if(confirm("切換身分？")) { localStorage.clear(); location.reload(); } };
-        document.getElementById('route-map-btn').onclick = () => {
-            const locs = tripData[currentDay-1].activities.map(a => a.address || a.title);
-            if(locs.length < 1) return alert("無行程");
-            window.open(`https://www.google.com/maps/dir/${locs.map(l => encodeURIComponent(l)).join('/')}`, '_blank');
+        // --- 初始化頁面綁定 ---
+        const init = () => {
+            document.getElementById('nav-itinerary').onclick = () => { currentPage = 'itinerary'; updateNav('nav-itinerary'); syncAndRender(); };
+            document.getElementById('nav-checklist').onclick = () => { currentPage = 'checklist'; updateNav('nav-checklist'); syncAndRender(); };
+            document.getElementById('nav-budget').onclick = () => { currentPage = 'budget'; updateNav('nav-budget'); syncAndRender(); };
+            document.getElementById('nav-notes').onclick = () => { currentPage = 'notes'; updateNav('nav-notes'); syncAndRender(); };
+            
+            document.getElementById('fab-add').onclick = () => openAddModal();
+            document.getElementById('modal-cancel-btn').onclick = () => closeModal();
+            document.getElementById('modal-save-btn').onclick = () => handleSave();
+            document.getElementById('header-title-btn').onclick = () => { if(confirm("切換使用者身分？")) { localStorage.clear(); location.reload(); } };
+            document.getElementById('route-map-btn').onclick = () => {
+                const locs = tripData[currentDay-1].activities.map(a => a.address || a.title);
+                if(locs.length < 1) return alert("無行程");
+                window.open(`https://www.google.com/maps/dir/${locs.map(l => encodeURIComponent(l)).join('/')}`, '_blank');
+            };
+            syncAndRender();
         };
 
         function updateNav(id) {
@@ -346,7 +325,7 @@
             document.getElementById(id).classList.add('active-nav');
         }
 
-        syncAndRender();
+        init();
     </script>
 </body>
 </html>
