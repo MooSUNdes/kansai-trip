@@ -3,29 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>關西櫻花之旅 - 伯鴻穩定版</title>
+    <title>關西櫻花之旅 - 穩定修復版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
         
-        /* 核心修正：防止整體頁面滾動與縮放導致的卡頓 */
+        /* 核心修復：使用標準彈性佈局，確保底部不消失 */
         html, body { 
             font-family: 'Noto Sans TC', sans-serif; 
             background-color: #F8FAFC; 
             height: 100%; 
-            width: 100%; 
-            overflow: hidden; /* 防止整頁被拉動 */
-            position: fixed; /* 鎖定背景 */
-            -webkit-text-size-adjust: 100%;
+            margin: 0; 
+            padding: 0; 
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* 防止主頁面出現兩條捲軸 */
         }
 
-        /* 移除點擊延遲並優化觸控 */
-        button, a, .member-chip, .day-tab-trigger {
-            touch-action: manipulation;
-            -webkit-tap-highlight-color: transparent;
+        header { 
+            padding-top: env(safe-area-inset-top); 
+            background: white; 
+            z-index: 50; 
+            flex-shrink: 0; /* 頂部固定高度 */
+            border-bottom: 1px solid #F1F5F9;
         }
 
-        .active-tab { background-color: #059669 !important; color: white !important; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3); }
+        main { 
+            flex-grow: 1; /* 中間自動撐開 */
+            overflow-y: auto; /* 只有這裡可以捲動 */
+            -webkit-overflow-scrolling: touch;
+        }
+
+        footer { 
+            padding-bottom: env(safe-area-inset-bottom); 
+            height: calc(65px + env(safe-area-inset-bottom)); 
+            background: white; 
+            z-index: 50; 
+            flex-shrink: 0; /* 底部固定高度 */
+            border-top: 1px solid #F1F5F9;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.03);
+        }
+
+        /* 觸控最佳化 */
+        button, .member-chip, .day-tab-trigger { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+        .active-tab { background-color: #059669 !important; color: white !important; }
         .active-nav { color: #059669 !important; }
         .card-shadow { box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05); }
         .timeline-dot-景點 { background-color: #7C3AED; }
@@ -37,68 +58,60 @@
         .type-tag-購物 { background-color: #FDF2F8; color: #DB2777; }
         .type-tag-移動 { background-color: #EFF6FF; color: #2563EB; }
         .hashtag-red { color: #ef4444; font-weight: 800; font-size: 11px; margin-top: 6px; display: inline-block; }
-        
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .page-content { display: none; height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        .page-content { display: none; padding-bottom: 50px; }
         .page-content.active { display: block; }
-        
+        .no-scrollbar::-webkit-scrollbar { display: none; }
         #add-modal { display: none; z-index: 200; }
         #add-modal.active { display: flex; }
-        
-        .f-input { background-color: #f3f4f6; border: 2px solid transparent; border-radius: 1rem; padding: 0.8rem 1rem; font-size: 16px; /* 防止 iOS 輸入時自動縮放 */ font-weight: 700; width: 100%; margin-bottom: 8px; }
+        .f-input { background-color: #f3f4f6; border: none; border-radius: 1rem; padding: 0.8rem 1rem; font-size: 16px; font-weight: 700; width: 100%; margin-bottom: 8px; }
         .member-chip { border: 2px solid #e5e7eb; border-radius: 12px; padding: 6px 12px; font-size: 11px; font-weight: 800; cursor: pointer; }
         .member-chip.selected { background-color: #059669; color: white; border-color: #059669; }
-        
-        /* 頁面結構固定 */
-        header { padding-top: env(safe-area-inset-top); flex-shrink: 0; background: white; z-index: 40; }
-        footer { padding-bottom: env(safe-area-inset-bottom); height: calc(70px + env(safe-area-inset-bottom)); flex-shrink: 0; background: white; z-index: 40; }
-        
         .settled { opacity: 0.4; filter: grayscale(1); }
     </style>
 </head>
-<body class="h-screen flex flex-col relative text-gray-900">
+<body>
 
     <div id="user-overlay" class="fixed inset-0 bg-white z-[300] flex flex-col items-center justify-center p-10 hidden">
-        <h2 class="text-2xl font-black mb-8 text-emerald-600 italic">你是哪位團員？</h2>
+        <h2 class="text-2xl font-black mb-8 text-emerald-600 italic text-center">你是哪位團員？</h2>
         <div id="user-selector-grid" class="grid grid-cols-2 gap-4 w-full"></div>
     </div>
 
-    <header class="px-6 pb-4 flex justify-between items-end border-b border-gray-100 shadow-sm">
+    <header class="px-6 pb-4 flex justify-between items-end">
         <div id="header-title-btn" class="cursor-pointer">
             <h1 class="text-xl font-black tracking-tight">🌸 關西櫻花之旅</h1>
-            <p id="user-info-text" class="text-[10px] font-bold text-emerald-600 mt-0.5 uppercase tracking-widest italic">同步中...</p>
+            <p id="user-info-text" class="text-[10px] font-bold text-emerald-600 mt-0.5 uppercase tracking-widest italic font-black">同步中...</p>
         </div>
-        <div id="day-badge" class="bg-emerald-50 px-3 py-1.5 rounded-2xl text-emerald-600 text-xs font-black italic text-right mb-1">
+        <div id="day-badge" class="bg-emerald-50 px-3 py-1.5 rounded-2xl text-emerald-600 text-[10px] font-black italic text-right mb-1">
             第 <span id="header-day-num">1</span> 天 | <span id="header-date-str">4/13</span>
         </div>
     </header>
 
-    <div id="day-bar" class="bg-white border-b border-gray-50 z-20 hidden flex-shrink-0">
+    <div id="day-bar" class="bg-white border-b border-gray-50 flex-shrink-0 hidden">
         <div class="flex items-center px-4 py-3 space-x-3">
             <nav id="day-tabs-nav" class="flex-grow flex space-x-2 overflow-x-auto no-scrollbar pb-1"></nav>
-            <button id="route-map-btn" class="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-2xl bg-blue-500 text-white shadow-lg active:scale-90 text-xl">🗺️</button>
+            <button id="route-map-btn" class="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-blue-500 text-white shadow-md active:scale-90 text-lg">🗺️</button>
         </div>
     </div>
 
-    <main class="flex-grow relative overflow-hidden">
-        <section id="page-itinerary" class="page-content active px-6 py-6"><div id="itinerary-list" class="space-y-8 pb-32"></div></section>
-        <section id="page-checklist" class="page-content px-6 py-8"><h2 class="text-xl font-black mb-6 text-emerald-700">🧳 我的行李 (私有)</h2><div id="checklist-list" class="space-y-3 pb-32"></div></section>
+    <main>
+        <section id="page-itinerary" class="page-content active px-6 py-6"><div id="itinerary-list" class="space-y-8"></div></section>
+        <section id="page-checklist" class="page-content px-6 py-8"><h2 class="text-xl font-black mb-6 text-emerald-700">🧳 我的行李 (私有)</h2><div id="checklist-list" class="space-y-3"></div></section>
         <section id="page-budget" class="page-content px-6 py-8">
             <h2 class="text-xl font-black mb-6 text-emerald-700">💰 個人支出結算</h2>
             <div class="bg-white p-6 rounded-[2rem] card-shadow border border-gray-50 text-center mb-6 grid grid-cols-2 gap-4 divide-x">
                 <div><p class="text-gray-400 text-[10px] font-bold mb-1 uppercase">今日實付</p><p id="disp-today-cost" class="text-xl font-black text-emerald-600">¥0</p></div>
                 <div><p class="text-gray-400 text-[10px] font-bold mb-1 uppercase">旅程累計</p><p id="disp-total-cost" class="text-xl font-black text-blue-600">¥0</p></div>
             </div>
-            <div id="budget-list" class="space-y-4 pb-32"></div>
+            <div id="budget-list" class="space-y-4"></div>
         </section>
-        <section id="page-notes" class="page-content px-6 py-8"><h2 class="text-xl font-black mb-6 text-amber-600">📓 旅行筆記</h2><div id="notes-list" class="space-y-4 pb-32"></div></section>
+        <section id="page-notes" class="page-content px-6 py-8"><h2 class="text-xl font-black mb-6 text-amber-600">📓 旅行筆記</h2><div id="notes-list" class="space-y-4"></div></section>
     </main>
 
-    <button id="fab-add" class="fixed bottom-28 right-6 w-16 h-16 bg-emerald-600 text-white rounded-full shadow-lg flex items-center justify-center active:scale-90 z-[100]">
+    <button id="fab-add" class="fixed bottom-24 right-6 w-16 h-16 bg-emerald-600 text-white rounded-full shadow-lg flex items-center justify-center active:scale-90 z-[100]">
         <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
     </button>
 
-    <footer class="border-t border-gray-100 flex justify-between items-center text-gray-300 px-8 shadow-inner">
+    <footer class="flex justify-between items-center text-gray-300 px-8">
         <button id="nav-itinerary" class="flex flex-col items-center active-nav py-3"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg><span class="text-[9px] mt-1 font-bold">行程</span></button>
         <button id="nav-checklist" class="flex flex-col items-center py-3"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg><span class="text-[9px] mt-1 font-bold">行李</span></button>
         <button id="nav-budget" class="flex flex-col items-center py-3"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span class="text-[9px] mt-1 font-bold">分帳</span></button>
@@ -130,7 +143,7 @@
         
         let currentUser = localStorage.getItem('BH_User_v5');
         let currentDay = 1, currentPage = 'itinerary', editIndex = -1, editItemType = null;
-        let tripData = DATES.map((d, i) => ({ day: i+1, date: d, activities: [] }));
+        let tripData = DATES.map((d, i) => ({ day: i+1, activities: [] }));
         let notes = [], publicSpendings = [];
         let privateChecklist = JSON.parse(localStorage.getItem('BH_Check_v5')) || [];
         let privateSpendings = JSON.parse(localStorage.getItem('BH_Spend_v5')) || [];
@@ -197,11 +210,10 @@
                         ${a.note ? `<div class="hashtag-red"># ${a.note}</div>` : ''}
                         <div class="flex justify-between items-center mt-4 pt-3 border-t border-gray-50">
                             <span class="text-[10px] font-black text-gray-400">預算 ¥${(a.cost || 0).toLocaleString()}</span>
-                            <a href="http://googleusercontent.com/maps.google.com/dir/?api=1&destination=${encodeURIComponent(a.address || a.title)}&travelmode=transit" target="_blank" class="px-3 py-1 bg-emerald-50 rounded-xl text-emerald-600 text-[10px] font-black italic">導航 📍</a>
+                            <a href="http://googleusercontent.com/maps.google.com/dir/?api=1&destination=${encodeURIComponent(a.address || a.title)}&travelmode=transit" target="_blank" class="px-3 py-1 bg-emerald-50 rounded-xl text-emerald-600 text-[10px] font-black italic">導航</a>
                         </div>
                     </div>
                 </div>`).join('') || `<p class="text-center text-gray-300 py-10 italic uppercase font-black">Day ${currentDay} No Events</p>`;
-            
             list.querySelectorAll('.edit-it-btn').forEach(b => b.onclick = () => { editIndex = parseInt(b.dataset.idx); editItemType='itinerary'; openModal(); });
             list.querySelectorAll('.del-it-btn').forEach(b => b.onclick = () => { if(confirm("確定刪除？")) { tripData[currentDay-1].activities.splice(parseInt(b.dataset.idx), 1); saveToCloud('itinerary'); } });
         }
@@ -224,8 +236,7 @@
             list.innerHTML = [
                 ...dayPub.map(s => `<div class="flex items-center space-x-3 ${s.done ? 'settled' : ''}"><input type="checkbox" class="sync-check w-6 h-6 accent-emerald-600" ${s.done ? 'checked' : ''} data-id="${publicSpendings.indexOf(s)}"><div class="flex-grow bg-blue-50/50 p-5 rounded-3xl border-2 border-blue-100 relative"><div class="absolute top-4 right-4 flex space-x-2"><button class="edit-sp-btn icon-btn text-blue-400" data-idx="${publicSpendings.indexOf(s)}" data-type="pub">✎</button><button class="del-sp-btn icon-btn text-red-300" data-idx="${publicSpendings.indexOf(s)}" data-type="pub">✕</button></div><h4 class="font-black">${s.title} <span class="text-blue-600 ml-1">¥${s.cost.toLocaleString()}</span></h4><p class="text-[9px] font-bold text-blue-400 mt-1 uppercase">由 ${s.payer} 代墊 | 你的分擔: <span class="text-emerald-600 font-black">¥${Math.round(s.cost/(s.parts.length||1))}</span></p></div></div>`),
                 ...dayPriv.map(s => `<div class="bg-white p-5 rounded-3xl card-shadow border border-gray-100 relative"><div class="absolute top-4 right-4 flex space-x-2"><button class="edit-sp-btn icon-btn text-emerald-400" data-idx="${privateSpendings.indexOf(s)}" data-type="pri">✎</button><button class="del-sp-btn icon-btn text-red-300" data-idx="${privateSpendings.indexOf(s)}" data-type="pri">✕</button></div><h4 class="font-black text-gray-800">${s.title} <span class="text-emerald-600 ml-1">¥${s.cost.toLocaleString()}</span></h4><p class="text-[9px] font-bold text-gray-400 uppercase italic mt-1 font-black">個人私帳項目</p></div>`)
-            ].join('') || `<p class="text-center text-gray-300 py-10 italic uppercase font-black">Day ${currentDay} No Spending</p>`;
-            
+            ].join('') || `<p class="text-center text-gray-300 py-10 italic uppercase font-black">No Spending</p>`;
             list.querySelectorAll('.sync-check').forEach(ck => ck.onchange = () => { publicSpendings[ck.dataset.id].done = ck.checked; saveToCloud('publicSpend'); });
             list.querySelectorAll('.edit-sp-btn').forEach(b => b.onclick = () => { editIndex = parseInt(b.dataset.idx); editItemType = b.dataset.type; openModal(); });
             list.querySelectorAll('.del-sp-btn').forEach(b => b.onclick = () => { if(!confirm("確定刪除？")) return; if(b.dataset.type === 'pub') { publicSpendings.splice(parseInt(b.dataset.idx), 1); saveToCloud('publicSpend'); } else { privateSpendings.splice(parseInt(b.dataset.idx), 1); localStorage.setItem('BH_Spend_v5', JSON.stringify(privateSpendings)); syncAndRender(); } });
@@ -241,7 +252,7 @@
 
         function renderNotes() {
             const list = document.getElementById('notes-list');
-            list.innerHTML = notes.map((n, i) => `<div class="bg-white p-5 rounded-3xl card-shadow border border-gray-100 relative"><div class="absolute top-4 right-4 flex space-x-2"><button class="edit-nt-btn text-emerald-600 font-bold text-[10px]" data-idx="${i}">✎</button><button class="del-note text-red-300 font-bold" data-idx="${i}">✕</button></div><h4 class="font-black text-gray-900 pr-12 text-lg mb-2">${n.title}</h4><a href="${n.link}" target="_blank" class="inline-block px-4 py-2 bg-blue-50 rounded-xl text-blue-600 text-[10px] font-black italic shadow-sm active:scale-95">🔗 開啟筆記連結</a></div>`).join('');
+            list.innerHTML = notes.map((n, i) => `<div class="bg-white p-5 rounded-3xl card-shadow border border-gray-100 relative"><div class="absolute top-4 right-4 flex space-x-2"><button class="edit-nt-btn text-emerald-600 font-bold text-[10px]" data-idx="${i}">✎</button><button class="del-note text-red-300 font-bold" data-idx="${i}">✕</button></div><h4 class="font-black text-gray-900 pr-12 text-lg mb-2">${n.title}</h4><a href="${n.link}" target="_blank" class="inline-block px-4 py-2 bg-blue-50 rounded-xl text-blue-600 text-[10px] font-black italic shadow-sm active:scale-95">🔗 開啟連結</a></div>`).join('');
             list.querySelectorAll('.edit-nt-btn').forEach(b => b.onclick = () => { editIndex = parseInt(b.dataset.idx); editItemType='note'; openModal(); });
             list.querySelectorAll('.del-note').forEach(b => b.onclick = () => { if(confirm("刪除筆記？")){ notes.splice(parseInt(b.dataset.idx), 1); saveToCloud('notes'); } });
         }
@@ -257,7 +268,7 @@
                     document.getElementById('in-time').value = a.time.replace(':',''); document.getElementById('in-title').value = a.title; document.getElementById('in-type').value = a.type; document.getElementById('in-note').value = a.note || ""; document.getElementById('in-address').value = a.address || ""; document.getElementById('in-cost').value = a.cost || 0;
                 }
             } else if (currentPage === 'budget') {
-                container.innerHTML = `<input id="in-sp-title" type="text" placeholder="支出內容" class="f-input"><input id="in-sp-cost" type="number" placeholder="日幣金額" class="f-input"><p class="text-[10px] font-black text-gray-400 mt-2 uppercase">墊款人</p><select id="in-sp-payer" class="f-input">${MEMBERS.map(m=>`<option ${m===currentUser?'selected':''}>${m}</option>`).join('')}</select><div class="flex items-center justify-between py-2"><span class="text-xs font-black">公費分帳？</span><input type="checkbox" id="is-split" checked class="w-5 h-5 accent-emerald-600"></div><div id="part-ui" class="flex flex-wrap gap-2 mt-2">${MEMBERS.map(m => `<div class="member-chip selected" data-m="${m}">${m}</div>`).join('')}</div>`;
+                container.innerHTML = `<input id="in-sp-title" type="text" placeholder="支出內容" class="f-input"><input id="in-sp-cost" type="number" placeholder="日幣金額" class="f-input"><p class="text-[10px] font-black text-gray-400 mt-2">支付人</p><select id="in-sp-payer" class="f-input">${MEMBERS.map(m=>`<option ${m===currentUser?'selected':''}>${m}</option>`).join('')}</select><div class="flex items-center justify-between py-2"><span class="text-xs font-black">公費分帳？</span><input type="checkbox" id="is-split" checked class="w-5 h-5 accent-emerald-600"></div><div id="part-ui" class="flex flex-wrap gap-2 mt-2">${MEMBERS.map(m => `<div class="member-chip selected" data-m="${m}">${m}</div>`).join('')}</div>`;
                 const box = document.getElementById('is-split'); const pUI = document.getElementById('part-ui');
                 box.onchange = () => pUI.style.display = box.checked ? 'flex' : 'none';
                 pUI.querySelectorAll('.member-chip').forEach(c => c.onclick = () => c.classList.toggle('selected'));
@@ -278,6 +289,7 @@
 
         function handleSave() {
             try {
+                const modal = document.getElementById('add-modal');
                 if (currentPage === 'itinerary') {
                     const title = document.getElementById('in-title')?.value; if (!title) return alert("請輸入名稱");
                     const timeStr = document.getElementById('in-time')?.value || "0000";
@@ -307,11 +319,9 @@
                 } else if (currentPage === 'notes') {
                     const t = document.getElementById('in-nt-t')?.value; if(t) { const entry = {title: t, link: document.getElementById('in-nt-l').value}; if (editIndex === -1) notes.push(entry); else notes[editIndex] = entry; saveToCloud('notes'); }
                 }
-                closeModal();
+                modal.classList.remove('active'); modal.classList.add('hidden'); editIndex = -1; editItemType = null;
             } catch(e) { alert("儲存失敗"); }
         }
-
-        function closeModal() { document.getElementById('add-modal').classList.remove('active'); document.getElementById('add-modal').classList.add('hidden'); editIndex = -1; editItemType = null; }
 
         function showUserOverlay() {
             const grid = document.getElementById('user-selector-grid');
@@ -321,8 +331,8 @@
         }
 
         document.getElementById('fab-add').addEventListener('click', openModal);
-        document.getElementById('modal-cancel-btn').addEventListener('click', closeModal);
-        document.getElementById('modal-save-btn').addEventListener('click', handleSave);
+        document.getElementById('modal-cancel-btn').onclick = () => { document.getElementById('add-modal').classList.remove('active'); document.getElementById('add-modal').classList.add('hidden'); editIndex = -1; };
+        document.getElementById('modal-save-btn').onclick = handleSave;
         document.getElementById('nav-itinerary').onclick = () => { currentPage = 'itinerary'; syncAndRender(); };
         document.getElementById('nav-checklist').onclick = () => { currentPage = 'checklist'; syncAndRender(); };
         document.getElementById('nav-budget').onclick = () => { currentPage = 'budget'; syncAndRender(); };
@@ -331,9 +341,8 @@
         
         document.getElementById('route-map-btn').onclick = () => {
             const locs = tripData[currentDay-1]?.activities.map(a => a.address || a.title) || [];
-            if(locs.length < 1) return alert("請先新增行程");
-            const waypoints = locs.map(l => encodeURIComponent(l)).join('/');
-            window.open(`http://googleusercontent.com/maps.google.com/dir/${waypoints}`, '_blank');
+            if(locs.length < 2) return alert("請至少新增兩個景點");
+            window.open(`http://googleusercontent.com/maps.google.com/dir/${locs.map(l => encodeURIComponent(l)).join('/')}`, '_blank');
         };
 
         syncAndRender();
