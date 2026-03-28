@@ -20,12 +20,11 @@
         .type-tag-購物 { background-color: #FDF2F8; color: #DB2777; }
         .type-tag-移動 { background-color: #EFF6FF; color: #2563EB; }
         .hashtag-red { color: #ef4444; font-weight: 800; font-size: 11px; margin-top: 6px; display: inline-block; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
         .page-content { display: none; }
         .page-content.active { display: block; }
         #add-modal { display: none; z-index: 200; }
         #add-modal.active { display: flex; }
-        .f-input { background-color: #f3f4f6; border: 2px solid transparent; border-radius: 1rem; padding: 0.8rem 1rem; font-size: 0.875rem; font-weight: 700; width: 100%; margin-bottom: 8px; transition: all 0.2s; }
+        .f-input { background-color: #f3f4f6; border: 2px solid transparent; border-radius: 1rem; padding: 0.8rem 1rem; font-size: 0.875rem; font-weight: 700; width: 100%; margin-bottom: 8px; }
         .member-chip { border: 2px solid #e5e7eb; border-radius: 12px; padding: 6px 12px; font-size: 11px; font-weight: 800; cursor: pointer; }
         .member-chip.selected { background-color: #059669; color: white; border-color: #059669; }
         footer { padding-bottom: env(safe-area-inset-bottom); height: calc(75px + env(safe-area-inset-bottom)); z-index: 50; }
@@ -36,14 +35,14 @@
 <body class="h-screen flex flex-col overflow-hidden relative text-gray-900">
 
     <div id="user-overlay" class="fixed inset-0 bg-white z-[300] flex flex-col items-center justify-center p-10 hidden">
-        <h2 class="text-2xl font-black mb-8 text-emerald-600">你是誰？</h2>
+        <h2 class="text-2xl font-black mb-8 text-emerald-600 italic">你是誰？</h2>
         <div id="user-selector-grid" class="grid grid-cols-2 gap-4 w-full"></div>
     </div>
 
     <header class="bg-white px-6 pb-5 flex justify-between items-center border-b border-gray-100 shadow-sm z-10">
         <div id="header-title-btn" class="cursor-pointer">
             <h1 class="text-xl font-black tracking-tight">🌸 關西櫻花之旅</h1>
-            <p id="user-info-text" class="text-[9px] font-bold text-emerald-600 mt-0.5 tracking-widest uppercase italic">連線中...</p>
+            <p id="user-info-text" class="text-[9px] font-bold text-emerald-600 mt-0.5 uppercase tracking-widest italic font-black">同步中...</p>
         </div>
         <div id="day-badge" class="bg-emerald-50 px-3 py-1.5 rounded-2xl text-emerald-600 text-xs font-black italic text-right">
             第 <span id="header-day-num">1</span> 天<br>
@@ -51,10 +50,10 @@
         </div>
     </header>
 
-    <div id="day-bar" class="bg-white px-6 py-3 border-b border-gray-100 overflow-x-auto no-scrollbar hidden">
+    <div id="day-bar" class="bg-white px-6 py-3 border-b border-gray-50 overflow-x-auto no-scrollbar hidden">
         <div class="flex items-center space-x-2">
             <nav id="day-tabs-nav" class="flex space-x-2"></nav>
-            <button id="route-map-btn" class="flex-shrink-0 px-4 py-2 rounded-2xl text-xs font-black bg-blue-500 text-white shadow-md">🗺️ 總覽</button>
+            <button id="route-map-btn" class="flex-shrink-0 px-4 py-2 rounded-2xl text-xs font-black bg-blue-500 text-white shadow-md active:scale-95">🗺️ 總覽</button>
         </div>
     </div>
 
@@ -89,7 +88,7 @@
             <div id="modal-fields-container"></div>
             <div class="flex space-x-3 mt-8">
                 <button id="modal-cancel-btn" class="flex-1 py-4 text-sm font-black text-gray-400">取消</button>
-                <button id="modal-save-btn" class="flex-1 py-4 bg-emerald-600 text-white text-sm font-black rounded-2xl shadow-lg">確認儲存</button>
+                <button id="modal-save-btn" class="flex-1 py-4 bg-emerald-600 text-white text-sm font-black rounded-2xl shadow-lg active:bg-emerald-700">確認儲存</button>
             </div>
         </div>
     </div>
@@ -156,7 +155,7 @@
             list.innerHTML = dayActs.map((a, i) => `
                 <div class="flex items-start space-x-4">
                     <div class="flex flex-col items-center mt-1">
-                        <div class="w-10 h-10 rounded-full border-4 border-white shadow-md flex items-center justify-center text-white timeline-dot-${a.type}"><span class="text-[10px] font-black mb-0.5">${i+1}</span><span class="text-xs">${ICONS[a.type] || "📍"}</span></div>
+                        <div class="w-10 h-10 rounded-full border-4 border-white shadow-md flex items-center justify-center text-white timeline-dot-${a.type}"><span class="text-[10px] font-black leading-none mb-0.5">${i+1}</span><span class="text-xs">${ICONS[a.type] || "📍"}</span></div>
                         <span class="text-[9px] font-black text-gray-400 mt-2">${a.time}</span>
                     </div>
                     <div class="flex-grow bg-white rounded-3xl p-5 card-shadow border border-gray-50 relative">
@@ -165,14 +164,14 @@
                             <button class="del-it-btn text-red-400 text-[10px] font-bold" data-idx="${i}">✕</button>
                         </div>
                         <h3 class="font-black text-gray-900 pr-12">${a.title}</h3>
-                        <span class="text-[9px] px-2 py-0.5 rounded-full font-black type-tag-${a.type} mt-1 inline-block italic uppercase">${a.type}</span>
+                        <span class="text-[9px] px-2 py-0.5 rounded-full font-black type-tag-${a.type} mt-1 inline-block uppercase italic">${a.type}</span>
                         ${a.note ? `<div class="hashtag-red"># ${a.note}</div>` : ''}
                         <div class="flex justify-between items-center mt-4 pt-3 border-t border-gray-50">
                             <span class="text-[10px] font-black text-gray-400">預算 ¥${(a.cost || 0).toLocaleString()}</span>
-                            <a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(a.address || a.title)}" target="_blank" class="px-3 py-1 bg-emerald-50 rounded-xl text-emerald-600 text-[10px] font-black italic">導航 📍</a>
+                            <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(a.address || a.title)}" target="_blank" class="px-3 py-1 bg-emerald-50 rounded-xl text-emerald-600 text-[10px] font-black italic">導航 📍</a>
                         </div>
                     </div>
-                </div>`).join('') || `<p class="text-center text-gray-300 py-10 italic font-black uppercase">Day ${currentDay} No Events</p>`;
+                </div>`).join('') || `<p class="text-center text-gray-300 py-10 italic uppercase font-black">Day ${currentDay} No Events</p>`;
             list.querySelectorAll('.edit-it-btn').forEach(b => b.onclick = () => { editIndex = parseInt(b.dataset.idx); editItemType='itinerary'; openModal(); });
             list.querySelectorAll('.del-it-btn').forEach(b => b.onclick = () => { if(confirm("確定刪除？")) { tripData[currentDay-1].activities.splice(parseInt(b.dataset.idx), 1); saveToCloud('itinerary'); } });
         }
@@ -196,7 +195,7 @@
             list.innerHTML = [
                 ...dayPub.map(s => `<div class="flex items-center space-x-3 ${s.done ? 'settled' : ''}"><input type="checkbox" class="sync-check w-6 h-6 accent-emerald-600" ${s.done ? 'checked' : ''} data-id="${publicSpendings.indexOf(s)}"><div class="flex-grow bg-blue-50/50 p-5 rounded-3xl border-2 border-blue-100 relative"><div class="absolute top-4 right-4 flex space-x-2"><button class="edit-sp-btn icon-btn text-blue-400" data-idx="${publicSpendings.indexOf(s)}" data-type="pub">✎</button><button class="del-sp-btn icon-btn text-red-300" data-idx="${publicSpendings.indexOf(s)}" data-type="pub">✕</button></div><h4 class="font-black">${s.title} <span class="text-blue-600 ml-1">¥${s.cost.toLocaleString()}</span></h4><p class="text-[9px] font-bold text-blue-400 mt-1 uppercase">由 ${s.payer} 代墊 | 你的分擔: <span class="text-emerald-600 font-black">¥${Math.round(s.cost/(s.parts.length||1))}</span></p></div></div>`),
                 ...dayPriv.map(s => `<div class="bg-white p-5 rounded-3xl card-shadow border border-gray-100 relative"><div class="absolute top-4 right-4 flex space-x-2"><button class="edit-sp-btn icon-btn text-emerald-400" data-idx="${privateSpendings.indexOf(s)}" data-type="pri">✎</button><button class="del-sp-btn icon-btn text-red-300" data-idx="${privateSpendings.indexOf(s)}" data-type="pri">✕</button></div><h4 class="font-black text-gray-800">${s.title} <span class="text-emerald-600 ml-1">¥${s.cost.toLocaleString()}</span></h4><p class="text-[9px] font-bold text-gray-400 uppercase italic mt-1 font-black">個人私帳項目</p></div>`)
-            ].join('') || `<p class="text-center text-gray-300 py-10 italic uppercase font-black">No Spending</p>`;
+            ].join('') || `<p class="text-center text-gray-300 py-10 italic uppercase font-black">Day ${currentDay} No Spending</p>`;
             list.querySelectorAll('.sync-check').forEach(ck => ck.onchange = () => { publicSpendings[ck.dataset.id].done = ck.checked; saveToCloud('publicSpend'); });
             list.querySelectorAll('.edit-sp-btn').forEach(b => b.onclick = () => { editIndex = parseInt(b.dataset.idx); editItemType = b.dataset.type; openModal(); });
             list.querySelectorAll('.del-sp-btn').forEach(b => b.onclick = () => { if(!confirm("確定刪除？")) return; if(b.dataset.type === 'pub') { publicSpendings.splice(parseInt(b.dataset.idx), 1); saveToCloud('publicSpend'); } else { privateSpendings.splice(parseInt(b.dataset.idx), 1); localStorage.setItem('BH_Spend_v5', JSON.stringify(privateSpendings)); syncAndRender(); } });
@@ -220,88 +219,12 @@
             const modalTitle = document.getElementById('modal-title-text');
             modalTitle.innerText = editIndex === -1 ? "✨ 新增項目" : "✎ 編輯項目";
             if (currentPage === 'itinerary') {
-                container.innerHTML = `<div class="grid grid-cols-2 gap-2"><input id="in-time" type="text" placeholder="0900" class="f-input"><select id="in-type" class="f-input"><option>景點</option><option>美食</option><option>購物</option><option>移動</option></select></div><input id="in-title" type="text" placeholder="行程名稱" class="f-input"><input id="in-note" type="text" placeholder="備註標籤" class="f-input"><input id="in-address" type="text" placeholder="地標或地址" class="f-input"><input id="in-cost" type="number" placeholder="費用(日幣)" class="f-input">`;
+                container.innerHTML = `<div class="grid grid-cols-2 gap-2"><input id="in-time" type="text" placeholder="0900" class="f-input"><select id="in-type" class="f-input"><option>景點</option><option>美食</option><option>購物</option><option>移動</option></select></div><input id="in-title" type="text" placeholder="行程名稱" class="f-input"><input id="in-note" type="text" placeholder="紅色標籤" class="f-input"><input id="in-address" type="text" placeholder="地標名稱" class="f-input"><input id="in-cost" type="number" placeholder="預算" class="f-input">`;
                 if(editIndex !== -1) {
                     const a = tripData[currentDay-1].activities[editIndex];
                     document.getElementById('in-time').value = a.time.replace(':',''); document.getElementById('in-title').value = a.title; document.getElementById('in-type').value = a.type; document.getElementById('in-note').value = a.note || ""; document.getElementById('in-address').value = a.address || ""; document.getElementById('in-cost').value = a.cost || 0;
                 }
             } else if (currentPage === 'budget') {
-                container.innerHTML = `<input id="in-sp-title" type="text" placeholder="支出內容" class="f-input"><input id="in-sp-cost" type="number" placeholder="日幣金額" class="f-input"><p class="text-[10px] font-black text-gray-400 mt-2">支付人</p><select id="in-sp-payer" class="f-input">${MEMBERS.map(m=>`<option ${m===currentUser?'selected':''}>${m}</option>`).join('')}</select><div class="flex items-center justify-between py-2"><span class="text-xs font-black">公費分帳？</span><input type="checkbox" id="is-split" checked class="w-5 h-5 accent-emerald-600"></div><div id="part-ui" class="flex flex-wrap gap-2 mt-2">${MEMBERS.map(m => `<div class="member-chip selected" data-m="${m}">${m}</div>`).join('')}</div>`;
+                container.innerHTML = `<input id="in-sp-title" type="text" placeholder="支出內容" class="f-input"><input id="in-sp-cost" type="number" placeholder="金額" class="f-input"><p class="text-[10px] font-black text-gray-400 mt-2 uppercase">墊款人</p><select id="in-sp-payer" class="f-input">${MEMBERS.map(m=>`<option ${m===currentUser?'selected':''}>${m}</option>`).join('')}</select><div class="flex items-center justify-between py-2"><span class="text-xs font-black">公費分帳？</span><input type="checkbox" id="is-split" checked class="w-5 h-5 accent-emerald-600"></div><div id="part-ui" class="flex flex-wrap gap-2 mt-2">${MEMBERS.map(m => `<div class="member-chip selected" data-m="${m}">${m}</div>`).join('')}</div>`;
                 const box = document.getElementById('is-split'); const pUI = document.getElementById('part-ui');
                 box.onchange = () => pUI.style.display = box.checked ? 'flex' : 'none';
-                pUI.querySelectorAll('.member-chip').forEach(c => c.onclick = () => c.classList.toggle('selected'));
-                if(editIndex !== -1) {
-                    let s = (editItemType === 'pub') ? publicSpendings[editIndex] : privateSpendings[editIndex];
-                    document.getElementById('in-sp-title').value=s.title; document.getElementById('in-sp-cost').value=s.cost; document.getElementById('in-sp-payer').value=s.payer || currentUser; document.getElementById('is-split').checked = s.isSplit || false; pUI.style.display = s.isSplit ? 'flex' : 'none';
-                    if(s.isSplit) pUI.querySelectorAll('.member-chip').forEach(c => c.classList.toggle('selected', s.parts?.includes(c.dataset.m)));
-                }
-            } else if (currentPage === 'checklist') {
-                container.innerHTML = `<input id="in-check" type="text" placeholder="物品名稱" class="f-input">`;
-            } else if (currentPage === 'notes') {
-                container.innerHTML = `<input id="in-nt-t" type="text" placeholder="標題" class="f-input"><input id="in-nt-l" type="text" placeholder="網址" class="f-input">`;
-            }
-            document.getElementById('add-modal').classList.add('active');
-            document.getElementById('add-modal').classList.remove('hidden');
-        }
-
-        function handleSave() {
-            if (currentPage === 'itinerary') {
-                const title = document.getElementById('in-title').value; if (!title) return alert("請輸入名稱");
-                const timeStr = document.getElementById('in-time').value || "0000";
-                let t = timeStr.replace(/\D/g, '').padStart(4, '0');
-                const ft = t.substring(0,2) + ":" + t.substring(2,4);
-                const entry = { title, time: ft, type: document.getElementById('in-type').value, note: document.getElementById('in-note').value, address: document.getElementById('in-address').value, cost: parseInt(document.getElementById('in-cost').value)||0 };
-                if (editIndex === -1) tripData[currentDay-1].activities.push(entry); else tripData[currentDay-1].activities[editIndex] = entry;
-                tripData[currentDay-1].activities.sort((a,b) => a.time.localeCompare(b.time));
-                saveToCloud('itinerary');
-            } else if (currentPage === 'budget') {
-                const title = document.getElementById('in-sp-title').value || "支出"; const cost = parseInt(document.getElementById('in-sp-cost').value) || 0;
-                const isSplit = document.getElementById('is-split').checked; const payer = document.getElementById('in-sp-payer').value;
-                if (isSplit) {
-                    const parts = []; document.querySelectorAll('.member-chip.selected').forEach(c => parts.push(c.dataset.m));
-                    const entry = { day: currentDay, title, cost, payer, parts, done: false, isSplit: true };
-                    if (editIndex === -1) publicSpendings.push(entry); else publicSpendings[editIndex] = entry;
-                    saveToCloud('publicSpend');
-                } else {
-                    const entry = { day: currentDay, title, cost, isSplit: false };
-                    if (editIndex === -1) privateSpendings.push(entry); else privateSpendings[editIndex] = entry;
-                    localStorage.setItem('BH_Spend_v5', JSON.stringify(privateSpendings)); syncAndRender();
-                }
-            } else if (currentPage === 'checklist') {
-                const val = document.getElementById('in-check').value; if(val) { privateChecklist.push({text: val, done: false}); localStorage.setItem('BH_Check_v5', JSON.stringify(privateChecklist)); }
-                syncAndRender();
-            } else if (currentPage === 'notes') {
-                const t = document.getElementById('in-nt-t').value; if(t) { notes.push({title: t, link: document.getElementById('in-nt-l').value}); saveToCloud('notes'); }
-            }
-            closeModal();
-        }
-
-        function closeModal() { document.getElementById('add-modal').classList.remove('active'); document.getElementById('add-modal').classList.add('hidden'); editIndex = -1; editItemType = null; }
-
-        function showUserOverlay() {
-            const grid = document.getElementById('user-selector-grid');
-            grid.innerHTML = MEMBERS.map(m => `<button class="user-pick bg-gray-100 p-4 rounded-2xl font-black text-gray-600" data-user="${m}">${m}</button>`).join('');
-            document.getElementById('user-overlay').classList.remove('hidden');
-            grid.querySelectorAll('.user-pick').forEach(btn => btn.onclick = () => { localStorage.setItem('BH_User_v5', btn.dataset.user); location.reload(); });
-        }
-
-        document.getElementById('fab-add').addEventListener('click', openModal);
-        document.getElementById('modal-cancel-btn').addEventListener('click', closeModal);
-        document.getElementById('modal-save-btn').addEventListener('click', handleSave);
-        document.getElementById('nav-itinerary').onclick = () => { currentPage = 'itinerary'; syncAndRender(); };
-        document.getElementById('nav-checklist').onclick = () => { currentPage = 'checklist'; syncAndRender(); };
-        document.getElementById('nav-budget').onclick = () => { currentPage = 'budget'; syncAndRender(); };
-        document.getElementById('nav-notes').onclick = () => { currentPage = 'notes'; syncAndRender(); };
-        document.getElementById('header-title-btn').onclick = () => { if(confirm("換身分？")) { localStorage.clear(); location.reload(); } };
-        document.getElementById('route-map-btn').onclick = () => {
-            const locs = tripData[currentDay-1]?.activities.map(a => a.address || a.title) || [];
-            if(locs.length < 1) return alert("無行程");
-            const dest = encodeURIComponent(locs[locs.length-1]);
-            const waypoints = locs.slice(0, -1).map(l => encodeURIComponent(l)).join('|');
-            window.open(`https://www.google.com/maps/dir/?api=1&destination=${dest}&waypoints=${waypoints}&travelmode=transit`, '_blank');
-        };
-
-        syncAndRender();
-    </script>
-</body>
-</html>
