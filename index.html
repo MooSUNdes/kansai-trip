@@ -32,7 +32,8 @@
         .icon-btn { opacity: 0.4; transition: opacity 0.2s; cursor: pointer; padding: 4px; }
         footer { padding-bottom: env(safe-area-inset-bottom); height: calc(75px + env(safe-area-inset-bottom)); z-index: 50; }
         #fab-add { z-index: 100 !important; }
-        .settled { background-color: #F1F5F9 !important; opacity: 0.6; }
+        /* 增加 Header 安全區域避讓 */
+        header { padding-top: calc(1rem + env(safe-area-inset-top)); }
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden relative text-gray-900">
@@ -42,48 +43,48 @@
         <div id="user-selector" class="grid grid-cols-2 gap-4 w-full"></div>
     </div>
 
-    <header class="bg-white px-6 pt-12 pb-5 flex justify-between items-center border-b border-gray-100 shadow-sm z-10">
-        <div id="btn-reset-full">
+    <header class="bg-white px-6 pb-5 flex justify-between items-center border-b border-gray-100 shadow-sm z-10">
+        <div id="btn-reset-full" class="cursor-pointer">
             <h1 class="text-xl font-black tracking-tight">🌸 關西櫻花之旅</h1>
-            <p id="current-user-display" class="text-[9px] font-bold text-emerald-600 mt-0.5 tracking-widest uppercase italic">載入中...</p>
+            <p id="current-user-display" class="text-[9px] font-bold text-emerald-600 mt-0.5 tracking-widest uppercase italic">使用者確認中</p>
         </div>
         <div id="day-badge-container" class="bg-emerald-50 px-3 py-1.5 rounded-2xl text-emerald-600 text-xs font-black italic text-right">
             第 <span id="header-day">1</span> 天<br>
-            <span id="header-date" class="text-[8px] opacity-70">4/13</span>
+            <span id="header-date" class="text-[8px] opacity-70 italic font-bold">4/13</span>
         </div>
     </header>
 
-    <div id="day-selector-container" class="bg-white px-6 py-3 border-b border-gray-50 overflow-x-auto no-scrollbar hidden">
+    <div id="day-selector-container" class="bg-white px-6 py-3 border-b border-gray-100 overflow-x-auto no-scrollbar hidden">
         <div class="flex items-center space-x-2">
             <nav id="day-tabs" class="flex space-x-2"></nav>
-            <button id="btn-route" class="flex-shrink-0 px-4 py-2 rounded-2xl text-xs font-black bg-blue-500 text-white shadow-lg">🗺️ 總覽</button>
+            <button id="btn-route" class="flex-shrink-0 px-4 py-2 rounded-2xl text-xs font-black bg-blue-500 text-white shadow-md active:scale-95">🗺️ 總覽</button>
         </div>
     </div>
 
-    <main class="flex-grow overflow-y-auto relative pb-32">
+    <main class="flex-grow overflow-y-auto relative pb-40">
         <section id="page-itinerary" class="page-content active px-6 py-6"><div id="itinerary-content" class="space-y-8 pb-32 relative"></div></section>
-        <section id="page-checklist" class="page-content px-6 py-8"><h2 class="text-xl font-black mb-6 text-emerald-700">🧳 我的行李 (私有)</h2><div id="checklist-container" class="space-y-3 pb-24"></div></section>
+        <section id="page-checklist" class="page-content px-6 py-8"><h2 class="text-xl font-black mb-6 text-emerald-700">🧳 行李清單 (私有)</h2><div id="checklist-container" class="space-y-3 pb-24"></div></section>
         <section id="page-budget" class="page-content px-6 py-8">
-            <h2 class="text-xl font-black mb-6">💰 個人支出結算</h2>
-            <div class="bg-white p-8 rounded-[2rem] card-shadow border border-gray-50 text-center mb-6 grid grid-cols-2 gap-4 divide-x">
-                <div><p class="text-gray-400 text-[10px] font-bold mb-1 uppercase">今日應付</p><p id="total-budget" class="text-2xl font-black text-emerald-600">¥0</p></div>
-                <div><p class="text-gray-400 text-[10px] font-bold mb-1 uppercase">旅程總結</p><p id="grand-total-budget" class="text-2xl font-black text-blue-600">¥0</p></div>
+            <h2 class="text-xl font-black mb-6">💰 支出結算</h2>
+            <div class="bg-white p-6 rounded-[2rem] card-shadow border border-gray-50 text-center mb-6 grid grid-cols-2 gap-4 divide-x">
+                <div><p class="text-gray-400 text-[10px] font-bold mb-1 italic">今日應付</p><p id="total-budget" class="text-xl font-black text-emerald-600">¥0</p></div>
+                <div><p class="text-gray-400 text-[10px] font-bold mb-1 italic">八天總結</p><p id="grand-total-budget" class="text-xl font-black text-blue-600">¥0</p></div>
             </div>
             <div id="budget-list" class="space-y-4 pb-32"></div>
         </section>
-        <section id="page-notes" class="page-content px-6 py-8"><h2 class="text-xl font-black mb-6 text-amber-600">📓 攻略筆記</h2><div id="notes-list" class="space-y-4 pb-32"></div></section>
+        <section id="page-notes" class="page-content px-6 py-8"><h2 class="text-xl font-black mb-6 text-amber-600">📓 旅行筆記</h2><div id="notes-list" class="space-y-4 pb-32"></div></section>
     </main>
 
     <button id="fab-add" class="fixed bottom-32 right-6 w-16 h-16 bg-emerald-600 text-white rounded-full shadow-lg flex items-center justify-center transition-all active:scale-90"><svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg></button>
 
     <footer class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 flex justify-between items-center text-gray-300 px-8 pb-safe shadow-inner">
         <button id="nav-itinerary-btn" class="flex flex-col items-center active-nav py-3"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg><span class="text-[9px] mt-1 font-bold">行程</span></button>
-        <button id="nav-checklist-btn" class="flex flex-col items-center py-3"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg><span class="text-[9px] mt-1 font-bold">行李</span></button>
+        <button id="nav-checklist-btn" class="flex flex-col items-center py-3"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg><span class="text-[9px] mt-1 font-bold">行李</span></button>
         <button id="nav-budget-btn" class="flex flex-col items-center py-3"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span class="text-[9px] mt-1 font-bold">分帳</span></button>
         <button id="nav-notes-btn" class="flex flex-col items-center py-3"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg><span class="text-[9px] mt-1 font-bold">筆記</span></button>
     </footer>
 
-    <div id="add-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] items-center justify-center p-6"><div class="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl max-h-[85vh] overflow-y-auto"><h2 id="modal-title" class="text-xl font-black mb-6 text-emerald-600">新增項目</h2><div id="modal-fields"></div><div class="flex space-x-3 mt-8"><button id="btn-modal-cancel" class="flex-1 py-4 text-sm font-black text-gray-400">取消</button><button id="btn-modal-save" class="flex-1 py-4 bg-emerald-600 text-white text-sm font-black rounded-2xl shadow-lg">儲存</button></div></div></div>
+    <div id="add-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] items-center justify-center p-6"><div class="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl max-h-[85vh] overflow-y-auto"><h2 id="modal-title" class="text-xl font-black mb-6 text-emerald-600">新增項目</h2><div id="modal-fields"></div><div class="flex space-x-3 mt-8"><button id="btn-modal-cancel" class="flex-1 py-4 text-sm font-black text-gray-400">取消</button><button id="btn-modal-save" class="flex-1 py-4 bg-emerald-600 text-white text-sm font-black rounded-2xl shadow-lg">確認儲存</button></div></div></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -98,11 +99,12 @@
         const typeIcons = { "景點": "⛩️", "美食": "🍜", "購物": "🛍️", "移動": "🚃" };
         let currentUser = localStorage.getItem('BH_User_v5') || null;
         let currentDay = 1, currentPage = 'itinerary', editIndex = -1;
-        let tripData = DATES.map((d, i) => ({ day: i+1, date: d, activities: [], spendings: [] }));
+        let tripData = DATES.map((d, i) => ({ day: i+1, date: d, activities: [] }));
         let notes = [], publicSpendings = [];
         let privateChecklist = JSON.parse(localStorage.getItem('BH_Check_v5')) || [{ text: "護照", done: false }];
         let privateSpendings = JSON.parse(localStorage.getItem('BH_Spend_v5')) || [];
 
+        // Firebase 監聽
         onValue(ref(db, 'tripData'), (s) => { if(s.val()) { tripData = s.val(); window.renderAll(); } });
         onValue(ref(db, 'notes'), (s) => { if(s.val()) { notes = s.val(); window.renderAll(); } });
         onValue(ref(db, 'publicSpend'), (s) => { if(s.val()) { publicSpendings = s.val(); window.renderAll(); } });
@@ -131,42 +133,54 @@
             else if (currentPage === 'notes') renderNotes();
         }
 
+        // 強制渲染天數 Tabs 且點擊後立即刷新內容
         function renderDayTabs() {
             const tabs = document.getElementById('day-tabs');
-            tabs.innerHTML = tripData.map((d, i) => `
+            tabs.innerHTML = DATES.map((d, i) => `
                 <button class="day-tab-btn flex-shrink-0 px-5 py-2 rounded-2xl text-xs font-black transition-all flex flex-col items-center ${currentDay === i+1 ? 'active-tab shadow-lg' : 'bg-gray-100 text-gray-400'}" data-day="${i+1}">
                     <span>Day ${i+1}</span>
-                    <span class="text-[8px] font-bold opacity-60 tab-date">${DATES[i]}</span>
+                    <span class="text-[8px] font-bold opacity-60 tab-date">${d}</span>
                 </button>`).join('');
+            
             document.querySelectorAll('.day-tab-btn').forEach(btn => {
-                btn.onclick = () => { currentDay = parseInt(btn.dataset.day); window.renderAll(); };
+                btn.onclick = (e) => {
+                    e.preventDefault();
+                    currentDay = parseInt(btn.dataset.day);
+                    // 關鍵修復：手動切換天數後，立即執行渲染
+                    window.renderAll(); 
+                };
             });
         }
 
         function renderItinerary() {
-            const content = document.getElementById('itinerary-content');
-            content.innerHTML = tripData[currentDay-1].activities.map((a, i) => `
+            const dayData = tripData[currentDay-1] || { activities: [] };
+            document.getElementById('itinerary-content').innerHTML = dayData.activities.map((a, i) => `
                 <div class="flex items-start space-x-4">
                     <div class="flex flex-col items-center mt-1">
                         <div class="w-10 h-10 rounded-full border-4 border-white shadow-md flex items-center justify-center text-white timeline-dot-${a.type}"><span class="text-[10px] font-black mb-0.5">${i+1}</span><span class="text-xs">${typeIcons[a.type] || "📍"}</span></div>
                         <span class="text-[9px] font-black text-gray-400 mt-2">${a.time}</span>
                     </div>
                     <div class="flex-grow bg-white rounded-3xl p-5 card-shadow border border-gray-50 relative">
-                        <div class="absolute top-4 right-4 flex space-x-2"><button class="edit-act-btn icon-btn text-emerald-600" data-idx="${i}">✎</button><button class="del-act-btn icon-btn text-red-400" data-idx="${i}">✕</button></div>
+                        <div class="absolute top-4 right-4 flex space-x-2">
+                            <button class="edit-act-btn icon-btn text-emerald-600" data-idx="${i}">✎</button>
+                            <button class="del-act-btn icon-btn text-red-400" data-idx="${i}">✕</button>
+                        </div>
                         <h3 class="font-black text-gray-900 pr-12">${a.title}</h3>
-                        <span class="text-[9px] px-2 py-0.5 rounded-full font-black type-tag-${a.type} mt-1 inline-block italic">${a.type}</span>
+                        <span class="text-[9px] px-2 py-0.5 rounded-full font-black type-tag-${a.type} mt-1 inline-block italic font-bold uppercase tracking-tighter">${a.type}</span>
                         ${a.note ? `<div class="hashtag-red"># ${a.note}</div>` : ''}
-                        <div class="flex justify-between items-center mt-4 border-t border-gray-50 pt-3"><span class="text-[10px] font-black text-gray-400">¥${a.cost.toLocaleString()}</span><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(a.address || a.title)}" target="_blank" class="px-3 py-1 bg-emerald-50 rounded-xl text-emerald-600 text-[10px] font-black">導航</a></div>
+                        <div class="flex justify-between items-center mt-4 border-t border-gray-50 pt-3"><span class="text-[10px] font-black text-gray-400">預算 ¥${a.cost.toLocaleString()}</span><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(a.address || a.title)}" target="_blank" class="px-3 py-1 bg-emerald-50 rounded-xl text-emerald-600 text-[10px] font-black">導航 📍</a></div>
                     </div>
-                </div>`).join('');
+                </div>`).join('') || `<p class="text-center text-gray-300 py-10 font-bold italic">Day ${currentDay} 尚無行程</p>`;
+            
             document.querySelectorAll('.edit-act-btn').forEach(b => b.onclick = () => window.editEntry(parseInt(b.dataset.idx)));
-            document.querySelectorAll('.del-act-btn').forEach(b => b.onclick = () => { if(confirm("刪除？")) { tripData[currentDay-1].activities.splice(b.dataset.idx, 1); sync('itinerary'); } });
+            document.querySelectorAll('.del-act-btn').forEach(b => b.onclick = () => { if(confirm("確定刪除？")) { tripData[currentDay-1].activities.splice(b.dataset.idx, 1); sync('itinerary'); } });
         }
 
         function calculateUserCost(dayNum) {
             let total = 0;
-            total += tripData[dayNum-1].activities.reduce((s, a) => s + a.cost, 0);
-            publicSpendings.filter(s => s.day === dayNum && s.parts.includes(currentUser)).forEach(s => {
+            const dayAct = tripData[dayNum-1]?.activities || [];
+            total += dayAct.reduce((s, a) => s + a.cost, 0);
+            publicSpendings.filter(s => s.day === dayNum && s.parts?.includes(currentUser)).forEach(s => {
                 total += Math.round(s.cost / (s.parts.length || 1));
             });
             total += privateSpendings.filter(s => s.day === dayNum).reduce((s, x) => s + x.cost, 0);
@@ -189,17 +203,17 @@
                         <input type="checkbox" class="sync-check w-6 h-6 accent-emerald-600" ${s.done ? 'checked' : ''} data-realidx="${publicSpendings.indexOf(s)}">
                         <div class="flex-grow bg-blue-50/50 p-5 rounded-3xl border-2 border-blue-100 relative">
                             <div class="absolute top-4 right-4 flex space-x-2"><button class="edit-pub-btn icon-btn" data-realidx="${publicSpendings.indexOf(s)}">✎</button><button class="del-pub-btn icon-btn" data-realidx="${publicSpendings.indexOf(s)}">✕</button></div>
-                            <h4 class="font-black text-gray-800">${s.title} <span>¥${s.cost.toLocaleString()}</span></h4>
-                            <p class="text-[9px] font-bold text-blue-400 uppercase">由 ${s.payer} 代墊 | 應付: <span class="text-emerald-600 font-black">¥${Math.round(s.cost/(s.parts.length||1))}</span></p>
+                            <h4 class="font-black text-gray-800">${s.title} <span class="text-blue-600">¥${s.cost.toLocaleString()}</span></h4>
+                            <p class="text-[9px] font-bold text-blue-400 uppercase italic">由 ${s.payer} 代墊 | 應付: <span class="text-emerald-600 font-black">¥${Math.round(s.cost/(s.parts.length||1))}</span></p>
                         </div>
                     </div>`),
                 ...dayPriv.map((s, i) => `
                     <div class="bg-white p-5 rounded-3xl card-shadow border border-gray-100 relative">
                         <div class="absolute top-4 right-4 flex space-x-2"><button class="edit-pri-btn icon-btn" data-realidx="${privateSpendings.indexOf(s)}">✎</button><button class="del-pri-btn icon-btn" data-realidx="${privateSpendings.indexOf(s)}">✕</button></div>
-                        <h4 class="font-black text-gray-800">${s.title} <span>¥${s.cost.toLocaleString()}</span></h4>
-                        <p class="text-[9px] font-bold text-gray-400 uppercase">個人私帳</p>
+                        <h4 class="font-black text-gray-800">${s.title} <span class="text-emerald-600 font-bold">¥${s.cost.toLocaleString()}</span></h4>
+                        <p class="text-[9px] font-bold text-gray-400 uppercase italic font-bold">個人私帳</p>
                     </div>`)
-            ].join('') || `<p class="text-center text-gray-300 py-10 text-xs font-bold uppercase italic">No Records</p>`;
+            ].join('') || `<p class="text-center text-gray-300 py-10 font-bold">本日無帳務</p>`;
 
             document.querySelectorAll('.sync-check').forEach(ck => ck.onchange = () => { publicSpendings[ck.dataset.realidx].done = ck.checked; sync('publicSpend'); });
             document.querySelectorAll('.edit-pub-btn').forEach(b => b.onclick = () => window.editEntry(parseInt(b.dataset.realidx), 'pub'));
@@ -210,13 +224,13 @@
 
         function renderChecklist() {
             document.getElementById('checklist-container').innerHTML = privateChecklist.map((item, idx) => `<div class="flex items-center bg-white p-4 rounded-2xl card-shadow border border-gray-50"><label class="flex items-center flex-grow space-x-3"><input type="checkbox" ${item.done ? 'checked' : ''} class="check-box-input w-5 h-5 accent-emerald-600 rounded" data-idx="${idx}"><span class="text-sm font-black ${item.done ? 'text-gray-300 line-through italic' : ''}">${item.text}</span></label><div class="flex space-x-2"><button class="edit-check-btn icon-btn text-emerald-600" data-idx="${idx}">✎</button><button class="del-check-btn icon-btn px-1" data-idx="${idx}">✕</button></div></div>`).join('');
-            document.querySelectorAll('.check-box-input').forEach(i => i.onchange = () => { privateChecklist[i.dataset.idx].done = !privateChecklist[i.dataset.idx].done; localStorage.setItem('BH_Check_v5', JSON.stringify(privateChecklist)); window.renderAll(); });
+            document.querySelectorAll('.check-box-input').forEach(i => i.onchange = () => { privateChecklist[i.dataset.idx].done = !privateChecklist[i.dataset.idx].done; localStorage.setItem('BH_Check_v5', JSON.stringify(privateChecklist)); renderAll(); });
             document.querySelectorAll('.edit-check-btn').forEach(b => b.onclick = () => window.editEntry(parseInt(b.dataset.idx), 'check'));
-            document.querySelectorAll('.del-check-btn').forEach(b => b.onclick = () => { privateChecklist.splice(b.dataset.idx, 1); localStorage.setItem('BH_Check_v5', JSON.stringify(privateChecklist)); window.renderAll(); });
+            document.querySelectorAll('.del-check-btn').forEach(b => b.onclick = () => { privateChecklist.splice(b.dataset.idx, 1); localStorage.setItem('BH_Check_v5', JSON.stringify(privateChecklist)); renderAll(); });
         }
 
         function renderNotes() {
-            document.getElementById('notes-list').innerHTML = notes.map((n, i) => `<div class="bg-white p-5 rounded-3xl card-shadow border border-gray-100 relative"><div class="absolute top-4 right-4 flex space-x-2"><button class="edit-note-btn icon-btn text-emerald-600" data-idx="${i}">✎</button><button class="del-note-btn icon-btn" data-idx="${i}">✕</button></div><h4 class="font-black text-gray-900 pr-12 text-lg mb-2">${n.title}</h4><div class="flex items-center justify-between mt-4"><span>筆記</span>${n.link ? `<a href="${n.link}" target="_blank" class="px-4 py-2 bg-blue-50 rounded-xl text-blue-600 text-[10px] font-black italic">網址 🌐</a>` : ''}</div></div>`).join('');
+            document.getElementById('notes-list').innerHTML = notes.map((n, i) => `<div class="bg-white p-5 rounded-3xl card-shadow border border-gray-100 relative"><div class="absolute top-4 right-4 flex space-x-2"><button class="edit-note-btn icon-btn text-emerald-600" data-idx="${i}">✎</button><button class="del-note-btn icon-btn" data-idx="${i}">✕</button></div><h4 class="font-black text-gray-900 pr-12 text-lg mb-2">${n.title}</h4><div class="flex items-center justify-between mt-4"><span class="text-[9px] font-bold text-gray-400">攻略網址</span>${n.link ? `<a href="${n.link}" target="_blank" class="px-4 py-2 bg-blue-50 rounded-xl text-blue-600 text-[10px] font-black italic">開啟連結 🌐</a>` : ''}</div></div>`).join('');
             document.querySelectorAll('.edit-note-btn').forEach(b => b.onclick = () => window.editEntry(parseInt(b.dataset.idx), 'note'));
             document.querySelectorAll('.del-note-btn').forEach(b => b.onclick = () => { if(confirm("刪除筆記？")) { notes.splice(b.dataset.idx, 1); sync('notes'); } });
         }
@@ -252,8 +266,8 @@
         window.handleFabClick = () => {
             const fields = document.getElementById('modal-fields');
             if (currentPage === 'itinerary') fields.innerHTML = `<div class="grid grid-cols-2 gap-2"><input id="in-time" type="text" placeholder="0900" class="f-input"><select id="in-type" class="f-input"><option>景點</option><option>美食</option><option>購物</option><option>移動</option></select></div><input id="in-title" type="text" placeholder="名稱" class="f-input"><input id="in-note" type="text" placeholder="標籤" class="f-input"><input id="in-address" type="text" placeholder="地址" class="f-input"><input id="in-cost" type="number" placeholder="費用" class="f-input">`;
-            else if (currentPage === 'checklist') fields.innerHTML = `<input id="in-check-text" type="text" placeholder="行李項目" class="f-input">`;
-            else if (currentPage === 'budget') fields.innerHTML = `<input id="in-spend-title" type="text" placeholder="項目" class="f-input"><input id="in-spend-cost" type="number" placeholder="日幣金額" class="f-input"><p class="text-[10px] font-black text-gray-400 mt-2 italic uppercase">Payer</p><select id="in-payer" class="f-input">${MEMBERS.map(m => `<option>${m}</option>`).join('')}</select><div class="flex items-center justify-between py-2"><span class="text-xs font-black">是否分帳？</span><input type="checkbox" id="is-split" checked class="w-5 h-5 accent-emerald-600"></div><div id="participant-ui" class="space-y-2"><div class="flex flex-wrap gap-2">${MEMBERS.map(m => `<div class="member-chip selected" data-m="${m}">${m}</div>`).join('')}</div></div>`;
+            else if (currentPage === 'checklist') fields.innerHTML = `<input id="in-check-text" type="text" placeholder="項目" class="f-input">`;
+            else if (currentPage === 'budget') fields.innerHTML = `<input id="in-spend-title" type="text" placeholder="項目" class="f-input"><input id="in-spend-cost" type="number" placeholder="金額" class="f-input"><p class="text-[10px] font-black text-gray-400 mt-2 uppercase italic">Payer 墊款人</p><select id="in-payer" class="f-input">${MEMBERS.map(m => `<option>${m}</option>`).join('')}</select><div class="flex items-center justify-between py-2"><span class="text-xs font-black">是否分帳？</span><input type="checkbox" id="is-split" checked class="w-5 h-5 accent-emerald-600"></div><div id="participant-ui" class="space-y-2"><div class="flex flex-wrap gap-2">${MEMBERS.map(m => `<div class="member-chip selected" data-m="${m}">${m}</div>`).join('')}</div></div>`;
             else if (currentPage === 'notes') fields.innerHTML = `<input id="in-note-title" type="text" placeholder="標題" class="f-input"><input id="in-note-link" type="text" placeholder="https://..." class="f-input">`;
             if(currentPage === 'budget') {
                 const splitBox = document.getElementById('is-split');
@@ -274,7 +288,7 @@
             document.getElementById('btn-modal-cancel').onclick = () => { document.getElementById('add-modal').classList.remove('active'); editIndex = -1; };
             document.getElementById('btn-modal-save').onclick = () => window.saveEntry();
             document.getElementById('btn-route').onclick = () => { const locs = tripData[currentDay-1].activities.map(a => a.address || a.title); if(locs.length < 1) return alert("無行程"); window.open(`https://www.google.com/maps/dir/${locs.map(l => encodeURIComponent(l)).join('/')}`, '_blank'); };
-            document.getElementById('btn-reset-full').onclick = () => { if(confirm("重置身分與私帳？")) { localStorage.clear(); location.reload(); } };
+            document.getElementById('btn-reset-full').onclick = () => { if(confirm("更換使用者或重置私密帳務？")) { localStorage.clear(); location.reload(); } };
             window.renderAll();
         }
         initApp();
