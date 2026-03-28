@@ -182,8 +182,8 @@
                         <span class="text-[9px] px-2 py-0.5 rounded-full font-black type-tag-${a.type} mt-1 inline-block uppercase italic">${a.type}</span>
                         ${a.note ? `<div class="hashtag-red"># ${a.note}</div>` : ''}
                         <div class="flex justify-between items-center mt-4 pt-3 border-t border-gray-50">
-                            <span class="text-[10px] font-black text-gray-400">預算 ¥${(a.cost || 0).toLocaleString()}</span>
-                            <a href="http://googleusercontent.com/maps.google.com/dir/?api=1&destination=${encodeURIComponent(a.address || a.title)}&travelmode=transit" target="_blank" class="px-3 py-1 bg-emerald-50 rounded-xl text-emerald-600 text-[10px] font-black italic">導航</a>
+                            <span class="text-[10px] font-black text-gray-400">預算標註 ¥${(a.cost || 0).toLocaleString()}</span>
+                            <a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(a.address || a.title)}&travelmode=transit" target="_blank" class="px-3 py-1 bg-emerald-50 rounded-xl text-emerald-600 text-[10px] font-black italic">導航 📍</a>
                         </div>
                     </div>
                 </div>`).join('') || `<p class="text-center text-gray-300 py-10 italic uppercase font-black">Day ${currentDay} No Events</p>`;
@@ -209,7 +209,7 @@
             list.innerHTML = [
                 ...dayPub.map(s => `<div class="flex items-center space-x-3 ${s.done ? 'settled' : ''}"><input type="checkbox" class="sync-check w-6 h-6 accent-emerald-600" ${s.done ? 'checked' : ''} data-id="${publicSpendings.indexOf(s)}"><div class="flex-grow bg-blue-50/50 p-5 rounded-3xl border-2 border-blue-100 relative"><div class="absolute top-4 right-4 flex space-x-2"><button class="edit-sp-btn icon-btn text-blue-400" data-idx="${publicSpendings.indexOf(s)}" data-type="pub">✎</button><button class="del-sp-btn icon-btn text-red-300" data-idx="${publicSpendings.indexOf(s)}" data-type="pub">✕</button></div><h4 class="font-black">${s.title} <span class="text-blue-600 ml-1">¥${s.cost.toLocaleString()}</span></h4><p class="text-[9px] font-bold text-blue-400 mt-1 uppercase">由 ${s.payer} 代墊 | 你的分擔: <span class="text-emerald-600 font-black">¥${Math.round(s.cost/(s.parts.length||1))}</span></p></div></div>`),
                 ...dayPriv.map(s => `<div class="bg-white p-5 rounded-3xl card-shadow border border-gray-100 relative"><div class="absolute top-4 right-4 flex space-x-2"><button class="edit-sp-btn icon-btn text-emerald-400" data-idx="${privateSpendings.indexOf(s)}" data-type="pri">✎</button><button class="del-sp-btn icon-btn text-red-300" data-idx="${privateSpendings.indexOf(s)}" data-type="pri">✕</button></div><h4 class="font-black text-gray-800">${s.title} <span class="text-emerald-600 ml-1">¥${s.cost.toLocaleString()}</span></h4><p class="text-[9px] font-bold text-gray-400 uppercase italic mt-1 font-black">個人私帳項目</p></div>`)
-            ].join('') || `<p class="text-center text-gray-300 py-10 italic uppercase font-black">No Spending</p>`;
+            ].join('') || `<p class="text-center text-gray-300 py-10 italic uppercase font-black">Day ${currentDay} No Spending</p>`;
             list.querySelectorAll('.sync-check').forEach(ck => ck.onchange = () => { publicSpendings[ck.dataset.id].done = ck.checked; saveToCloud('publicSpend'); });
             list.querySelectorAll('.edit-sp-btn').forEach(b => b.onclick = () => { editIndex = parseInt(b.dataset.idx); editItemType = b.dataset.type; openModal(); });
             list.querySelectorAll('.del-sp-btn').forEach(b => b.onclick = () => { if(!confirm("確定刪除？")) return; if(b.dataset.type === 'pub') { publicSpendings.splice(parseInt(b.dataset.idx), 1); saveToCloud('publicSpend'); } else { privateSpendings.splice(parseInt(b.dataset.idx), 1); localStorage.setItem('BH_Spend_v5', JSON.stringify(privateSpendings)); syncAndRender(); } });
@@ -235,7 +235,7 @@
             const modalTitle = document.getElementById('modal-title-text');
             modalTitle.innerText = editIndex === -1 ? "✨ 新增項目" : "✎ 編輯項目";
             if (currentPage === 'itinerary') {
-                container.innerHTML = `<div class="grid grid-cols-2 gap-2"><input id="in-time" type="text" placeholder="0900" class="f-input"><select id="in-type" class="f-input"><option>景點</option><option>美食</option><option>購物</option><option>移動</option></select></div><input id="in-title" type="text" placeholder="名稱" class="f-input"><input id="in-note" type="text" placeholder="標籤" class="f-input"><input id="in-address" type="text" placeholder="地址" class="f-input"><input id="in-cost" type="number" placeholder="預算" class="f-input">`;
+                container.innerHTML = `<div class="grid grid-cols-2 gap-2"><input id="in-time" type="text" placeholder="0900" class="f-input"><select id="in-type" class="f-input"><option>景點</option><option>美食</option><option>購物</option><option>移動</option></select></div><input id="in-title" type="text" placeholder="行程名稱" class="f-input"><input id="in-note" type="text" placeholder="標籤" class="f-input"><input id="in-address" type="text" placeholder="地址" class="f-input"><input id="in-cost" type="number" placeholder="費用預算" class="f-input">`;
                 if(editIndex !== -1) {
                     const a = tripData[currentDay-1].activities[editIndex];
                     document.getElementById('in-time').value = a.time.replace(':',''); document.getElementById('in-title').value = a.title; document.getElementById('in-type').value = a.type; document.getElementById('in-note').value = a.note || ""; document.getElementById('in-address').value = a.address || ""; document.getElementById('in-cost').value = a.cost || 0;
@@ -264,8 +264,8 @@
             try {
                 if (currentPage === 'itinerary') {
                     const title = document.getElementById('in-title')?.value; if (!title) return alert("請輸入名稱");
-                    const timeStr = document.getElementById('in-time')?.value || "0000";
-                    const entry = { title, time: formatTime(timeStr), type: document.getElementById('in-type').value, note: document.getElementById('in-note').value, address: document.getElementById('in-address').value, cost: parseInt(document.getElementById('in-cost').value || 0) };
+                    const entry = { title, time: formatTime(document.getElementById('in-time')?.value || "0000"), type: document.getElementById('in-type').value, note: document.getElementById('in-note').value, address: document.getElementById('in-address').value, cost: parseInt(document.getElementById('in-cost').value || 0) };
+                    if (!tripData[currentDay-1].activities) tripData[currentDay-1].activities = [];
                     if (editIndex === -1) tripData[currentDay-1].activities.push(entry); else tripData[currentDay-1].activities[editIndex] = entry;
                     tripData[currentDay-1].activities.sort((a,b) => a.time.localeCompare(b.time)); saveToCloud('itinerary');
                 } else if (currentPage === 'budget') {
@@ -313,9 +313,8 @@
         document.getElementById('route-map-btn').onclick = () => {
             const locs = tripData[currentDay-1]?.activities.map(a => a.address || a.title) || [];
             if(locs.length < 1) return alert("請先新增行程");
-            // 使用 encodeURIComponent 徹底解決中文字亂碼
             const waypoints = locs.map(l => encodeURIComponent(l)).join('/');
-            window.open(`http://googleusercontent.com/maps.google.com/dir/${waypoints}`, '_blank');
+            window.open(`https://www.google.com/maps/dir/${waypoints}`, '_blank');
         };
 
         syncAndRender();
