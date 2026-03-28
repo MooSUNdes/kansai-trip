@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>關西櫻花之旅 - 伯鴻終極版</title>
+    <title>關西櫻花之旅 - 伯鴻穩定版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
@@ -35,7 +35,7 @@
 <body class="h-screen flex flex-col overflow-hidden relative text-gray-900">
 
     <div id="user-overlay" class="fixed inset-0 bg-white z-[300] flex flex-col items-center justify-center p-10 hidden">
-        <h2 class="text-2xl font-black mb-8 text-emerald-600 italic">你是誰？</h2>
+        <h2 class="text-2xl font-black mb-8 text-emerald-600 italic text-center">WELCOME!<br>你是哪位團員？</h2>
         <div id="user-selector-grid" class="grid grid-cols-2 gap-4 w-full"></div>
     </div>
 
@@ -50,7 +50,7 @@
         </div>
     </header>
 
-    <div id="day-bar" class="bg-white px-6 py-3 border-b border-gray-50 overflow-x-auto no-scrollbar hidden">
+    <div id="day-bar" class="bg-white px-6 py-3 border-b border-gray-100 overflow-x-auto no-scrollbar hidden">
         <div class="flex items-center space-x-2">
             <nav id="day-tabs-nav" class="flex space-x-2"></nav>
             <button id="route-map-btn" class="flex-shrink-0 px-4 py-2 rounded-2xl text-xs font-black bg-blue-500 text-white shadow-md active:scale-95">🗺️ 總覽</button>
@@ -84,7 +84,7 @@
 
     <div id="add-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm items-center justify-center p-6 hidden">
         <div class="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl max-h-[85vh] overflow-y-auto">
-            <h2 id="modal-title-text" class="text-xl font-black mb-6 text-emerald-600">新增項目</h2>
+            <h2 id="modal-title-text" class="text-xl font-black mb-6 text-emerald-600 italic">新增項目</h2>
             <div id="modal-fields-container"></div>
             <div class="flex space-x-3 mt-8">
                 <button id="modal-cancel-btn" class="flex-1 py-4 text-sm font-black text-gray-400">取消</button>
@@ -107,6 +107,8 @@
         
         let currentUser = localStorage.getItem('BH_User_v5');
         let currentDay = 1, currentPage = 'itinerary', editIndex = -1, editItemType = null;
+        
+        // 核心修正：初始結構
         let tripData = DATES.map((d, i) => ({ day: i+1, date: d, activities: [] }));
         let notes = [], publicSpendings = [];
         let privateChecklist = JSON.parse(localStorage.getItem('BH_Check_v5')) || [];
@@ -133,14 +135,27 @@
             else if (currentPage === 'notes') renderNotes();
         };
 
-        onValue(ref(db, 'tripData'), (s) => { if(s.val()) { tripData = s.val(); syncAndRender(); } });
-        onValue(ref(db, 'notes'), (s) => { if(s.val()) { notes = s.val(); syncAndRender(); } });
-        onValue(ref(db, 'publicSpend'), (s) => { if(s.val()) { publicSpendings = s.val(); syncAndRender(); } });
+        onValue(ref(db, 'tripData'), (s) => { 
+            const val = s.val();
+            if(val && Array.isArray(val)) {
+                // 確保 8 天結構完整
+                tripData = val;
+                while(tripData.length < 8) tripData.push({ day: tripData.length+1, activities: [] });
+            }
+            syncAndRender(); 
+        });
+        onValue(ref(db, 'notes'), (s) => { if(s.val()) notes = s.val(); syncAndRender(); });
+        onValue(ref(db, 'publicSpend'), (s) => { if(s.val()) publicSpendings = s.val(); syncAndRender(); });
 
         const saveToCloud = (t) => {
             if(t==='itinerary') fbSet(ref(db, 'tripData'), tripData);
             if(t==='notes') fbSet(ref(db, 'notes'), notes);
             if(t==='publicSpend') fbSet(ref(db, 'publicSpend'), publicSpendings);
+        };
+
+        const formatTime = (v) => {
+            let d = v.replace(/\D/g, '').padStart(4, '0');
+            return d.substring(0,2) + ":" + d.substring(2,4);
         };
 
         function renderDayTabs() {
@@ -155,7 +170,7 @@
             list.innerHTML = dayActs.map((a, i) => `
                 <div class="flex items-start space-x-4">
                     <div class="flex flex-col items-center mt-1">
-                        <div class="w-10 h-10 rounded-full border-4 border-white shadow-md flex items-center justify-center text-white timeline-dot-${a.type}"><span class="text-[10px] font-black leading-none mb-0.5">${i+1}</span><span class="text-xs">${ICONS[a.type] || "📍"}</span></div>
+                        <div class="w-10 h-10 rounded-full border-4 border-white shadow-md flex items-center justify-center text-white timeline-dot-${a.type}"><span class="text-xs">${ICONS[a.type] || "📍"}</span></div>
                         <span class="text-[9px] font-black text-gray-400 mt-2">${a.time}</span>
                     </div>
                     <div class="flex-grow bg-white rounded-3xl p-5 card-shadow border border-gray-50 relative">
@@ -178,9 +193,9 @@
 
         function calculateUserCost(d) {
             let s = 0; const acts = tripData[d-1]?.activities || [];
-            s += acts.reduce((acc, a) => acc + (a.cost || 0), 0);
+            s += acts.reduce((acc, a) => acc + (parseInt(a.cost) || 0), 0);
             publicSpendings.filter(x => x.day === d && x.parts?.includes(currentUser)).forEach(x => s += Math.round(x.cost / (x.parts.length || 1)));
-            privateSpendings.filter(x => x.day === d).forEach(x => s += (x.cost || 0));
+            privateSpendings.filter(x => x.day === d).forEach(x => s += (parseInt(x.cost) || 0));
             return s;
         }
 
@@ -219,13 +234,13 @@
             const modalTitle = document.getElementById('modal-title-text');
             modalTitle.innerText = editIndex === -1 ? "✨ 新增項目" : "✎ 編輯項目";
             if (currentPage === 'itinerary') {
-                container.innerHTML = `<div class="grid grid-cols-2 gap-2"><input id="in-time" type="text" placeholder="0900" class="f-input"><select id="in-type" class="f-input"><option>景點</option><option>美食</option><option>購物</option><option>移動</option></select></div><input id="in-title" type="text" placeholder="行程名稱" class="f-input"><input id="in-note" type="text" placeholder="紅色標籤" class="f-input"><input id="in-address" type="text" placeholder="地標名稱" class="f-input"><input id="in-cost" type="number" placeholder="預算" class="f-input">`;
+                container.innerHTML = `<div class="grid grid-cols-2 gap-2"><input id="in-time" type="text" placeholder="0900" class="f-input"><select id="in-type" class="f-input"><option>景點</option><option>美食</option><option>購物</option><option>移動</option></select></div><input id="in-title" type="text" placeholder="行程名稱" class="f-input"><input id="in-note" type="text" placeholder="紅色井字標籤" class="f-input"><input id="in-address" type="text" placeholder="地標名稱" class="f-input"><input id="in-cost" type="number" placeholder="費用預算" class="f-input">`;
                 if(editIndex !== -1) {
                     const a = tripData[currentDay-1].activities[editIndex];
                     document.getElementById('in-time').value = a.time.replace(':',''); document.getElementById('in-title').value = a.title; document.getElementById('in-type').value = a.type; document.getElementById('in-note').value = a.note || ""; document.getElementById('in-address').value = a.address || ""; document.getElementById('in-cost').value = a.cost || 0;
                 }
             } else if (currentPage === 'budget') {
-                container.innerHTML = `<input id="in-sp-title" type="text" placeholder="支出內容" class="f-input"><input id="in-sp-cost" type="number" placeholder="金額" class="f-input"><p class="text-[10px] font-black text-gray-400 mt-2 uppercase">墊款人</p><select id="in-sp-payer" class="f-input">${MEMBERS.map(m=>`<option ${m===currentUser?'selected':''}>${m}</option>`).join('')}</select><div class="flex items-center justify-between py-2"><span class="text-xs font-black">公費分帳？</span><input type="checkbox" id="is-split" checked class="w-5 h-5 accent-emerald-600"></div><div id="part-ui" class="flex flex-wrap gap-2 mt-2">${MEMBERS.map(m => `<div class="member-chip selected" data-m="${m}">${m}</div>`).join('')}</div>`;
+                container.innerHTML = `<input id="in-sp-title" type="text" placeholder="支出內容" class="f-input"><input id="in-sp-cost" type="number" placeholder="日幣金額" class="f-input"><p class="text-[10px] font-black text-gray-400 mt-2 uppercase">墊款人</p><select id="in-sp-payer" class="f-input">${MEMBERS.map(m=>`<option ${m===currentUser?'selected':''}>${m}</option>`).join('')}</select><div class="flex items-center justify-between py-2"><span class="text-xs font-black">公費分帳？</span><input type="checkbox" id="is-split" checked class="w-5 h-5 accent-emerald-600"></div><div id="part-ui" class="flex flex-wrap gap-2 mt-2">${MEMBERS.map(m => `<div class="member-chip selected" data-m="${m}">${m}</div>`).join('')}</div>`;
                 const box = document.getElementById('is-split'); const pUI = document.getElementById('part-ui');
                 box.onchange = () => pUI.style.display = box.checked ? 'flex' : 'none';
                 pUI.querySelectorAll('.member-chip').forEach(c => c.onclick = () => c.classList.toggle('selected'));
@@ -235,9 +250,9 @@
                     if(s.isSplit) pUI.querySelectorAll('.member-chip').forEach(c => c.classList.toggle('selected', s.parts?.includes(c.dataset.m)));
                 }
             } else if (currentPage === 'checklist') {
-                container.innerHTML = `<input id="in-check" type="text" placeholder="行李項目" class="f-input">`;
+                container.innerHTML = `<input id="in-check" type="text" placeholder="物品名稱" class="f-input">`;
             } else if (currentPage === 'notes') {
-                container.innerHTML = `<input id="in-nt-t" type="text" placeholder="標題" class="f-input"><input id="in-nt-l" type="text" placeholder="網址" class="f-input">`;
+                container.innerHTML = `<input id="in-nt-t" type="text" placeholder="標題" class="f-input"><input id="in-nt-l" type="text" placeholder="連結 https://..." class="f-input">`;
             }
             document.getElementById('add-modal').classList.remove('hidden'); document.getElementById('add-modal').classList.add('active');
         }
@@ -247,10 +262,24 @@
                 if (currentPage === 'itinerary') {
                     const title = document.getElementById('in-title')?.value; if (!title) return alert("請輸入名稱");
                     const timeStr = document.getElementById('in-time')?.value || "0000";
-                    let t = timeStr.replace(/\D/g, '').padStart(4, '0');
-                    const ft = t.substring(0,2) + ":" + t.substring(2,4);
-                    const entry = { title, time: ft, type: document.getElementById('in-type').value, note: document.getElementById('in-note').value, address: document.getElementById('in-address').value, cost: parseInt(document.getElementById('in-cost').value || 0) };
-                    if (editIndex === -1) tripData[currentDay-1].activities.push(entry); else tripData[currentDay-1].activities[editIndex] = entry;
+                    const entry = { 
+                        title, 
+                        time: formatTime(timeStr), 
+                        type: document.getElementById('in-type').value, 
+                        note: document.getElementById('in-note').value, 
+                        address: document.getElementById('in-address').value, 
+                        cost: parseInt(document.getElementById('in-cost').value || 0) 
+                    };
+                    
+                    // 核心修正：強制結構檢查
+                    if (!tripData[currentDay-1]) {
+                        tripData[currentDay-1] = { day: currentDay, date: DATES[currentDay-1], activities: [] };
+                    }
+                    if (!tripData[currentDay-1].activities) tripData[currentDay-1].activities = [];
+
+                    if (editIndex === -1) tripData[currentDay-1].activities.push(entry); 
+                    else tripData[currentDay-1].activities[editIndex] = entry;
+                    
                     tripData[currentDay-1].activities.sort((a,b) => a.time.localeCompare(b.time));
                     saveToCloud('itinerary');
                 } else if (currentPage === 'budget') {
@@ -275,7 +304,7 @@
                     const t = document.getElementById('in-nt-t')?.value; if(t) { const entry = {title: t, link: document.getElementById('in-nt-l').value}; notes.push(entry); saveToCloud('notes'); }
                 }
                 closeModal();
-            } catch(e) { alert("儲存出錯：" + e.message); }
+            } catch(e) { alert("儲存出錯，請再試一次"); console.error(e); }
         }
 
         function closeModal() { document.getElementById('add-modal').classList.remove('active'); document.getElementById('add-modal').classList.add('hidden'); editIndex = -1; editItemType = null; }
@@ -299,9 +328,10 @@
         document.getElementById('route-map-btn').onclick = () => {
             const locs = tripData[currentDay-1]?.activities.map(a => a.address || a.title) || [];
             if(locs.length < 1) return alert("無行程");
+            const origin = encodeURIComponent(locs[0]);
             const dest = encodeURIComponent(locs[locs.length-1]);
-            const waypoints = locs.slice(0, -1).map(l => encodeURIComponent(l)).join('|');
-            window.open(`https://www.google.com/maps/dir/?api=1&destination=${dest}&waypoints=${waypoints}&travelmode=transit`, '_blank');
+            const waypoints = locs.slice(1, -1).map(l => encodeURIComponent(l)).join('|');
+            window.open(`https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}&waypoints=${waypoints}&travelmode=transit`, '_blank');
         };
 
         syncAndRender();
