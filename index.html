@@ -228,3 +228,83 @@
                 container.innerHTML = `<input id="in-sp-title" type="text" placeholder="支出內容" class="f-input"><input id="in-sp-cost" type="number" placeholder="金額" class="f-input"><p class="text-[10px] font-black text-gray-400 mt-2 uppercase">墊款人</p><select id="in-sp-payer" class="f-input">${MEMBERS.map(m=>`<option ${m===currentUser?'selected':''}>${m}</option>`).join('')}</select><div class="flex items-center justify-between py-2"><span class="text-xs font-black">公費分帳？</span><input type="checkbox" id="is-split" checked class="w-5 h-5 accent-emerald-600"></div><div id="part-ui" class="flex flex-wrap gap-2 mt-2">${MEMBERS.map(m => `<div class="member-chip selected" data-m="${m}">${m}</div>`).join('')}</div>`;
                 const box = document.getElementById('is-split'); const pUI = document.getElementById('part-ui');
                 box.onchange = () => pUI.style.display = box.checked ? 'flex' : 'none';
+                pUI.querySelectorAll('.member-chip').forEach(c => c.onclick = () => c.classList.toggle('selected'));
+                if(editIndex !== -1) {
+                    let s = (editItemType === 'pub') ? publicSpendings[editIndex] : privateSpendings[editIndex];
+                    document.getElementById('in-sp-title').value=s.title; document.getElementById('in-sp-cost').value=s.cost; document.getElementById('in-sp-payer').value=s.payer || currentUser; document.getElementById('is-split').checked = s.isSplit || false; pUI.style.display = s.isSplit ? 'flex' : 'none';
+                    if(s.isSplit) pUI.querySelectorAll('.member-chip').forEach(c => c.classList.toggle('selected', s.parts?.includes(c.dataset.m)));
+                }
+            } else if (currentPage === 'checklist') {
+                container.innerHTML = `<input id="in-check" type="text" placeholder="行李項目" class="f-input">`;
+            } else if (currentPage === 'notes') {
+                container.innerHTML = `<input id="in-nt-t" type="text" placeholder="標題" class="f-input"><input id="in-nt-l" type="text" placeholder="網址" class="f-input">`;
+            }
+            document.getElementById('add-modal').classList.remove('hidden'); document.getElementById('add-modal').classList.add('active');
+        }
+
+        function handleSave() {
+            try {
+                if (currentPage === 'itinerary') {
+                    const title = document.getElementById('in-title')?.value; if (!title) return alert("請輸入名稱");
+                    const timeStr = document.getElementById('in-time')?.value || "0000";
+                    let t = timeStr.replace(/\D/g, '').padStart(4, '0');
+                    const ft = t.substring(0,2) + ":" + t.substring(2,4);
+                    const entry = { title, time: ft, type: document.getElementById('in-type').value, note: document.getElementById('in-note').value, address: document.getElementById('in-address').value, cost: parseInt(document.getElementById('in-cost').value || 0) };
+                    if (editIndex === -1) tripData[currentDay-1].activities.push(entry); else tripData[currentDay-1].activities[editIndex] = entry;
+                    tripData[currentDay-1].activities.sort((a,b) => a.time.localeCompare(b.time));
+                    saveToCloud('itinerary');
+                } else if (currentPage === 'budget') {
+                    const title = document.getElementById('in-sp-title')?.value || "支出"; 
+                    const cost = parseInt(document.getElementById('in-sp-cost')?.value || 0);
+                    const isSplit = document.getElementById('is-split')?.checked; 
+                    const payer = document.getElementById('in-sp-payer')?.value;
+                    if (isSplit) {
+                        const parts = []; document.querySelectorAll('.member-chip.selected').forEach(c => parts.push(c.dataset.m));
+                        const entry = { day: currentDay, title, cost, payer, parts, done: false, isSplit: true };
+                        if (editIndex === -1) publicSpendings.push(entry); else publicSpendings[editIndex] = entry;
+                        saveToCloud('publicSpend');
+                    } else {
+                        const entry = { day: currentDay, title, cost, isSplit: false };
+                        if (editIndex === -1) privateSpendings.push(entry); else privateSpendings[editIndex] = entry;
+                        localStorage.setItem('BH_Spend_v5', JSON.stringify(privateSpendings)); syncAndRender();
+                    }
+                } else if (currentPage === 'checklist') {
+                    const val = document.getElementById('in-check')?.value; if(val) { privateChecklist.push({text: val, done: false}); localStorage.setItem('BH_Check_v5', JSON.stringify(privateChecklist)); }
+                    syncAndRender();
+                } else if (currentPage === 'notes') {
+                    const t = document.getElementById('in-nt-t')?.value; if(t) { const entry = {title: t, link: document.getElementById('in-nt-l').value}; notes.push(entry); saveToCloud('notes'); }
+                }
+                closeModal();
+            } catch(e) { alert("儲存出錯：" + e.message); }
+        }
+
+        function closeModal() { document.getElementById('add-modal').classList.remove('active'); document.getElementById('add-modal').classList.add('hidden'); editIndex = -1; editItemType = null; }
+
+        function showUserOverlay() {
+            const grid = document.getElementById('user-selector-grid');
+            grid.innerHTML = MEMBERS.map(m => `<button class="user-pick bg-gray-100 p-4 rounded-2xl font-black text-gray-600" data-user="${m}">${m}</button>`).join('');
+            document.getElementById('user-overlay').classList.remove('hidden');
+            grid.querySelectorAll('.user-pick').forEach(btn => btn.onclick = () => { localStorage.setItem('BH_User_v5', btn.dataset.user); location.reload(); });
+        }
+
+        document.getElementById('fab-add').addEventListener('click', openModal);
+        document.getElementById('modal-cancel-btn').addEventListener('click', closeModal);
+        document.getElementById('modal-save-btn').addEventListener('click', handleSave);
+        document.getElementById('nav-itinerary').onclick = () => { currentPage = 'itinerary'; syncAndRender(); };
+        document.getElementById('nav-checklist').onclick = () => { currentPage = 'checklist'; syncAndRender(); };
+        document.getElementById('nav-budget').onclick = () => { currentPage = 'budget'; syncAndRender(); };
+        document.getElementById('nav-notes').onclick = () => { currentPage = 'notes'; syncAndRender(); };
+        document.getElementById('header-title-btn').onclick = () => { if(confirm("換身分？")) { localStorage.clear(); location.reload(); } };
+        
+        document.getElementById('route-map-btn').onclick = () => {
+            const locs = tripData[currentDay-1]?.activities.map(a => a.address || a.title) || [];
+            if(locs.length < 1) return alert("無行程");
+            const dest = encodeURIComponent(locs[locs.length-1]);
+            const waypoints = locs.slice(0, -1).map(l => encodeURIComponent(l)).join('|');
+            window.open(`https://www.google.com/maps/dir/?api=1&destination=${dest}&waypoints=${waypoints}&travelmode=transit`, '_blank');
+        };
+
+        syncAndRender();
+    </script>
+</body>
+</html>
