@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
-    <title>關西櫻花之旅</title>
+    <title> 關西櫻花之旅</title>
     
     <link rel="apple-touch-icon" href="icon.png">
     <link rel="icon" type="image/png" href="icon.png">
@@ -197,11 +197,11 @@
                 </div>`).join('');
             document.getElementById('user-overlay').classList.remove('hidden');
             grid.querySelectorAll('.user-pick').forEach(btn => btn.onclick = () => { localStorage.setItem('BH_User_v5', btn.dataset.user); currentUser = btn.dataset.user; syncAndRender(); });
-            grid.querySelectorAll('.edit-mem').forEach(btn => btn.onclick = () => { const newName = prompt("更改名稱：", MEMBERS[btn.dataset.idx]); if(newName) { MEMBERS[btn.dataset.idx] = newName.trim(); saveToCloud('members'); } });
+            grid.querySelectorAll('.edit-mem').forEach(btn => btn.onclick = () => { const newName = prompt("更改團員名稱：", MEMBERS[btn.dataset.idx]); if(newName) { MEMBERS[btn.dataset.idx] = newName.trim(); saveToCloud('members'); } });
             grid.querySelectorAll('.del-mem').forEach(btn => btn.onclick = () => { if(confirm(`確定刪除 ${MEMBERS[btn.dataset.idx]} 嗎？`)) { MEMBERS.splice(btn.dataset.idx, 1); saveToCloud('members'); } });
         }
 
-        document.getElementById('add-member-btn').onclick = () => { const n = prompt("新成員名稱："); if(n) { MEMBERS.push(n.trim()); saveToCloud('members'); } };
+        document.getElementById('add-member-btn').onclick = () => { const n = prompt("請輸入新團員名稱："); if(n) { MEMBERS.push(n.trim()); saveToCloud('members'); } };
 
         function renderDayTabs() {
             const nav = document.getElementById('day-tabs-nav');
@@ -229,7 +229,7 @@
                             <button onclick="location.href='https://www.google.com/maps/dir/?api=1&destination=${q}&travelmode=transit'" class="px-3 py-1 bg-emerald-50 rounded-xl text-emerald-600 text-[10px] font-black italic">導航 📍</button>
                         </div>
                     </div>
-                </div>`}).join('') || `<p class="text-center text-gray-300 py-10 italic uppercase font-black">No Events</p>`;
+                </div>`}).join('') || `<p class="text-center text-gray-300 py-10 italic uppercase font-black">Day ${currentDay} No Events</p>`;
             list.querySelectorAll('.edit-it-btn').forEach(b => b.onclick = () => { editIndex = parseInt(b.dataset.idx); editItemType='itinerary'; openModal(); });
             list.querySelectorAll('.del-it-btn').forEach(b => b.onclick = () => { if(confirm("確定刪除？")) { tripData[currentDay-1].activities.splice(parseInt(b.dataset.idx), 1); saveToCloud('itinerary'); } });
         }
@@ -246,10 +246,14 @@
                 ...dayPub.map(s => {
                     const realIdx = publicSpendings.indexOf(s);
                     const whoPaid = s.whoPaid || [];
+                    const perCost = Math.round(s.cost / (s.parts.length || 1));
                     return `
                     <div class="bg-blue-50/50 p-5 rounded-3xl border-2 border-blue-100 relative ${whoPaid.length === s.parts.length ? 'settled' : ''}">
                         <div class="flex items-center justify-between mb-4"><div class="flex items-center space-x-3"><input type="checkbox" class="sync-check w-7 h-7 accent-emerald-600" ${whoPaid.includes(currentUser) ? 'checked' : ''} ${s.payer === currentUser ? 'disabled' : ''} data-id="${realIdx}"><h4 class="font-black text-gray-800 text-lg">${s.title} <span class="text-blue-600">¥${s.cost.toLocaleString()}</span></h4></div><div class="flex space-x-2"><button class="edit-sp-btn text-blue-400 font-bold" data-idx="${realIdx}" data-type="pub">✎</button><button class="del-sp-btn text-red-300 font-bold" data-idx="${realIdx}" data-type="pub">✕</button></div></div>
-                        <div class="flex justify-between items-center mt-3 pt-3 border-t border-blue-100/50"><p class="text-[10px] font-bold text-blue-400 uppercase italic">由 ${s.payer} 代墊</p><div class="flex space-x-1.5">${s.parts.map(m => `<div class="pay-avatar ${whoPaid.includes(m) ? 'paid' : 'unpaid'} border-2 border-white shadow-sm">${whoPaid.includes(m) ? '✓' : m.substring(0,1)}</div>`).join('')}</div></div>
+                        <div class="flex justify-between items-center mt-3 pt-3 border-t border-blue-100/50">
+                            <p class="text-[10px] font-bold text-blue-400 uppercase italic">由 ${s.payer} 代墊 | 應付: <span class="text-emerald-600 font-black">¥${perCost.toLocaleString()}</span></p>
+                            <div class="flex space-x-1.5">${s.parts.map(m => `<div class="pay-avatar ${whoPaid.includes(m) ? 'paid' : 'unpaid'} border-2 border-white shadow-sm">${whoPaid.includes(m) ? '✓' : m.substring(0,1)}</div>`).join('')}</div>
+                        </div>
                     </div>`}),
                 ...dayPriv.map(s => `<div class="bg-white p-5 rounded-3xl card-shadow border border-gray-100 relative"><div class="absolute top-4 right-4 flex space-x-2"><button class="edit-sp-btn icon-btn text-emerald-400" data-idx="${privateSpendings.indexOf(s)}" data-type="pri">✎</button><button class="del-sp-btn icon-btn text-red-300" data-idx="${privateSpendings.indexOf(s)}" data-type="pri">✕</button></div><h4 class="font-black text-gray-800">${s.title} <span class="text-emerald-600 ml-1">¥${s.cost.toLocaleString()}</span></h4><p class="text-[9px] font-bold text-gray-400 uppercase italic mt-1 font-black">個人私帳項目</p></div>`)
             ].join('') || `<p class="text-center text-gray-300 py-10 italic uppercase font-black">No Spending</p>`;
@@ -264,7 +268,7 @@
                 <div class="flex items-center bg-white p-5 rounded-3xl border border-gray-50 card-shadow">
                     <input type="checkbox" ${item.done ? 'checked' : ''} class="ck-box w-6 h-6 accent-emerald-600 flex-shrink-0" data-idx="${i}">
                     <div class="flex-grow ml-4">
-                        <p class="text-sm font-black ${item.done ? 'text-gray-300 line-through italic' : 'text-gray-800'}">${item.text}</p>
+                        <p class="text-sm font-black ${item.done ? 'text-gray-300 line-through italic' : ''}">${item.text}</p>
                         ${item.note ? `<p class="text-[10px] font-bold text-emerald-500 mt-1 italic">🚩 ${item.note}</p>` : ''}
                     </div>
                     <div class="flex space-x-2 ml-2">
@@ -293,7 +297,7 @@
                 container.innerHTML = getInp('in-time', '時間(0900)') + `<select id="in-type" class="f-input"><option>景點</option><option>美食</option><option>購物</option><option>移動</option></select>` + getInp('in-title', '名稱') + getInp('in-note', '標籤') + getInp('in-address', '詳細地址') + getInp('in-cost', '預算費用', 'number');
                 if(editIndex !== -1) { const a = tripData[currentDay-1].activities[editIndex]; document.getElementById('in-time').value = a.time.replace(':',''); document.getElementById('in-title').value = a.title; document.getElementById('in-type').value = a.type; document.getElementById('in-note').value = a.note || ""; document.getElementById('in-address').value = a.address || ""; document.getElementById('in-cost').value = a.cost || 0; }
             } else if (currentPage === 'budget') {
-                container.innerHTML = getInp('in-sp-title', '支出項目') + getInp('in-sp-cost', '日幣金額', 'number') + `<p class="text-[10px] font-black text-gray-400 mt-2 uppercase">代墊人</p><select id="in-sp-payer" class="f-input">${MEMBERS.map(m=>`<option ${m===currentUser?'selected':''}>${m}</option>`).join('')}</select><div class="flex items-center justify-between py-2"><span class="text-xs font-black">公費分帳？</span><input type="checkbox" id="is-split" checked class="w-5 h-5 accent-emerald-600"></div><div id="part-ui" class="flex flex-wrap gap-2 mt-2">${MEMBERS.map(m => `<div class="member-chip selected" data-m="${m}">${m}</div>`).join('')}</div>`;
+                container.innerHTML = getInp('in-sp-title', '支出項目') + getInp('in-sp-cost', '金額', 'number') + `<p class="text-[10px] font-black text-gray-400 mt-2 uppercase text-center">代墊人</p><select id="in-sp-payer" class="f-input">${MEMBERS.map(m=>`<option ${m===currentUser?'selected':''}>${m}</option>`).join('')}</select><div class="flex items-center justify-between py-2"><span class="text-xs font-black">公費分帳？</span><input type="checkbox" id="is-split" checked class="w-5 h-5 accent-emerald-600"></div><div id="part-ui" class="flex flex-wrap gap-2 mt-2">${MEMBERS.map(m => `<div class="member-chip selected" data-m="${m}">${m}</div>`).join('')}</div>`;
                 const box = document.getElementById('is-split'); const pUI = document.getElementById('part-ui');
                 box.onchange = () => pUI.style.display = box.checked ? 'flex' : 'none';
                 pUI.querySelectorAll('.member-chip').forEach(c => c.onclick = () => c.classList.toggle('selected'));
@@ -370,7 +374,7 @@
             if (currentPage === 'itinerary') {
                 const activities = tripData[currentDay-1]?.activities || [];
                 const locs = activities.map(a => a.address || a.title).filter(l => l && l.length > 0);
-                if(locs.length < 1) return alert("請先新增行程");
+                if(locs.length < 1) return alert("今天還沒排行程喔！");
                 const origin = encodeURIComponent(locs[0]);
                 const destination = encodeURIComponent(locs[locs.length-1]);
                 let url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=transit`;
@@ -380,7 +384,6 @@
         };
 
         document.getElementById('header-title-btn').onclick = () => { if(confirm("切換身份？")) { localStorage.removeItem('BH_User_v5'); location.reload(); } };
-        
         syncAndRender();
     </script>
 </body>
