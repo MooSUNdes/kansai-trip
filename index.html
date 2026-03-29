@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>關西櫻花之旅 - 伯鴻精準對帳版</title>
+    <title>關西櫻花之旅 - 伯鴻穩定版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
@@ -32,12 +32,9 @@
         .f-input { background-color: #f3f4f6; border: none; border-radius: 1rem; padding: 0.8rem 1rem; font-size: 16px; font-weight: 700; width: 100%; margin-bottom: 8px; }
         .member-chip { border: 2px solid #e5e7eb; border-radius: 12px; padding: 6px 12px; font-size: 11px; font-weight: 800; cursor: pointer; }
         .member-chip.selected { background-color: #059669; color: white; border-color: #059669; }
-        
-        /* 核心優化：頭像放大與文字優化 */
         .pay-avatar { width: 28px; height: 28px; border-radius: 8px; font-size: 12px; font-weight: 900; display: flex; align-items: center; justify-content: center; transition: all 0.3s; }
         .paid { background-color: #10B981; color: white; transform: scale(1.1); box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4); }
         .unpaid { background-color: #F3F4F6; color: #9CA3AF; border: 1px solid #E5E7EB; }
-        
         .settled { opacity: 0.5; filter: grayscale(0.5); }
     </style>
 </head>
@@ -128,16 +125,12 @@
             document.getElementById('user-info-text').innerText = `團員：${currentUser}`;
             document.getElementById('header-day-num').innerText = currentDay;
             document.getElementById('header-date-str').innerText = DATES[currentDay-1];
-            
             const hasDay = ['itinerary','budget'].includes(currentPage);
             document.getElementById('day-bar').style.display = hasDay ? 'block' : 'none';
-            
             document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
             document.getElementById(`page-${currentPage}`).classList.add('active');
-
             document.querySelectorAll('.nav-btn-item').forEach(btn => btn.classList.remove('active-nav'));
             document.getElementById(`nav-${currentPage}`).classList.add('active-nav');
-
             if (hasDay) renderDayTabs();
             if (currentPage === 'itinerary') renderItinerary();
             else if (currentPage === 'checklist') renderChecklist();
@@ -181,7 +174,7 @@
                         <h3 class="font-black text-gray-900 pr-12">${a.title}</h3>
                         <span class="text-[9px] px-2 py-0.5 rounded-full font-black type-tag-${a.type} mt-1 inline-block uppercase italic">${a.type}</span>
                         ${a.note ? `<div class="hashtag-red"># ${a.note}</div>` : ''}
-                        <div class="flex justify-between items-center mt-4 pt-3 border-t border-gray-50"><span class="text-[10px] font-black text-gray-400">預算 ¥${(a.cost || 0).toLocaleString()}</span><a href="http://googleusercontent.com/maps.google.com/dir/?api=1&destination=${encodeURIComponent(a.address || a.title)}&travelmode=transit" target="_blank" class="px-3 py-1 bg-emerald-50 rounded-xl text-emerald-600 text-[10px] font-black italic">導航</a></div>
+                        <div class="flex justify-between items-center mt-4 pt-3 border-t border-gray-50"><span class="text-[10px] font-black text-gray-400">預算 ¥${(a.cost || 0).toLocaleString()}</span><a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(a.address || a.title)}&travelmode=transit" target="_blank" class="px-3 py-1 bg-emerald-50 rounded-xl text-emerald-600 text-[10px] font-black italic">導航</a></div>
                     </div>
                 </div>`).join('') || `<p class="text-center text-gray-300 py-10 italic uppercase font-black">Day ${currentDay} No Events</p>`;
             list.querySelectorAll('.edit-it-btn').forEach(b => b.onclick = () => { editIndex = parseInt(b.dataset.idx); editItemType='itinerary'; openModal(); });
@@ -189,8 +182,7 @@
         }
 
         function calculateUserCost(d) {
-            let s = 0;
-            publicSpendings.filter(x => x.day === d && x.parts?.includes(currentUser)).forEach(x => s += Math.round(x.cost / (x.parts.length || 1)));
+            let s = 0; publicSpendings.filter(x => x.day === d && x.parts?.includes(currentUser)).forEach(x => s += Math.round(x.cost / (x.parts.length || 1)));
             privateSpendings.filter(x => x.day === d).forEach(x => s += (parseInt(x.cost) || 0));
             return s;
         }
@@ -211,27 +203,11 @@
                     const isPayer = s.payer === currentUser;
                     return `
                     <div class="bg-blue-50/50 p-5 rounded-3xl border-2 border-blue-100 relative ${s.whoPaid.length === s.parts.length ? 'settled' : ''}">
-                        <div class="flex items-center justify-between mb-4">
-                            <div class="flex items-center space-x-3">
-                                <input type="checkbox" class="sync-check w-7 h-7 accent-emerald-600" ${isIPaid ? 'checked' : ''} ${isPayer ? 'disabled' : ''} data-id="${realIdx}">
-                                <h4 class="font-black text-gray-800 text-lg">${s.title} <span class="text-blue-600">¥${s.cost.toLocaleString()}</span></h4>
-                            </div>
-                            <div class="flex space-x-2"><button class="edit-sp-btn text-blue-400 font-bold" data-idx="${realIdx}" data-type="pub">✎</button><button class="del-sp-btn text-red-300 font-bold" data-idx="${realIdx}" data-type="pub">✕</button></div>
-                        </div>
-                        <div class="flex justify-between items-center mt-3 pt-3 border-t border-blue-100/50">
-                            <p class="text-[10px] font-bold text-blue-400 uppercase italic">由 ${s.payer} 代墊 | 應付: <span class="text-emerald-600 font-black text-xs">¥${Math.round(s.cost/(s.parts.length||1))}</span></p>
-                            <div class="flex space-x-1.5">
-                                ${s.parts.map(m => `
-                                    <div class="pay-avatar ${s.whoPaid.includes(m) ? 'paid' : 'unpaid'} border-2 border-white shadow-sm">
-                                        ${s.whoPaid.includes(m) ? '✓' : m.substring(0,1)}
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
+                        <div class="flex items-center justify-between mb-4"><div class="flex items-center space-x-3"><input type="checkbox" class="sync-check w-7 h-7 accent-emerald-600" ${isIPaid ? 'checked' : ''} ${isPayer ? 'disabled' : ''} data-id="${realIdx}"><h4 class="font-black text-gray-800 text-lg">${s.title} <span class="text-blue-600">¥${s.cost.toLocaleString()}</span></h4></div><div class="flex space-x-2"><button class="edit-sp-btn text-blue-400 font-bold" data-idx="${realIdx}" data-type="pub">✎</button><button class="del-sp-btn text-red-300 font-bold" data-idx="${realIdx}" data-type="pub">✕</button></div></div>
+                        <div class="flex justify-between items-center mt-3 pt-3 border-t border-blue-100/50"><p class="text-[10px] font-bold text-blue-400 uppercase italic">由 ${s.payer} 代墊 | 應付: <span class="text-emerald-600 font-black text-xs">¥${Math.round(s.cost/(s.parts.length||1))}</span></p><div class="flex space-x-1.5">${s.parts.map(m => `<div class="pay-avatar ${s.whoPaid.includes(m) ? 'paid' : 'unpaid'} border-2 border-white shadow-sm">${s.whoPaid.includes(m) ? '✓' : m.substring(0,1)}</div>`).join('')}</div></div>
                     </div>`}),
                 ...dayPriv.map(s => `<div class="bg-white p-5 rounded-3xl card-shadow border border-gray-100 relative"><div class="absolute top-4 right-4 flex space-x-2"><button class="edit-sp-btn icon-btn text-emerald-400" data-idx="${privateSpendings.indexOf(s)}" data-type="pri">✎</button><button class="del-sp-btn icon-btn text-red-300" data-idx="${privateSpendings.indexOf(s)}" data-type="pri">✕</button></div><h4 class="font-black text-gray-800">${s.title} <span class="text-emerald-600 ml-1">¥${s.cost.toLocaleString()}</span></h4><p class="text-[9px] font-bold text-gray-400 uppercase italic mt-1 font-black">個人私帳項目</p></div>`)
             ].join('') || `<p class="text-center text-gray-300 py-10 italic uppercase font-black">No Spending</p>`;
-            
             list.querySelectorAll('.sync-check').forEach(ck => ck.onchange = () => {
                 const idx = ck.dataset.id;
                 if(!publicSpendings[idx].whoPaid) publicSpendings[idx].whoPaid = [];
@@ -264,20 +240,13 @@
             modalTitle.innerText = editIndex === -1 ? "✨ 新增項目" : "✎ 編輯項目";
             if (currentPage === 'itinerary') {
                 container.innerHTML = `<div class="grid grid-cols-2 gap-2"><input id="in-time" type="text" placeholder="0900" class="f-input"><select id="in-type" class="f-input"><option>景點</option><option>美食</option><option>購物</option><option>移動</option></select></div><input id="in-title" type="text" placeholder="名稱" class="f-input"><input id="in-note" type="text" placeholder="標籤" class="f-input"><input id="in-address" type="text" placeholder="地址" class="f-input"><input id="in-cost" type="number" placeholder="費用" class="f-input">`;
-                if(editIndex !== -1) {
-                    const a = tripData[currentDay-1].activities[editIndex];
-                    document.getElementById('in-time').value = a.time.replace(':',''); document.getElementById('in-title').value = a.title; document.getElementById('in-type').value = a.type; document.getElementById('in-note').value = a.note || ""; document.getElementById('in-address').value = a.address || ""; document.getElementById('in-cost').value = a.cost || 0;
-                }
+                if(editIndex !== -1) { const a = tripData[currentDay-1].activities[editIndex]; document.getElementById('in-time').value = a.time.replace(':',''); document.getElementById('in-title').value = a.title; document.getElementById('in-type').value = a.type; document.getElementById('in-note').value = a.note || ""; document.getElementById('in-address').value = a.address || ""; document.getElementById('in-cost').value = a.cost || 0; }
             } else if (currentPage === 'budget') {
                 container.innerHTML = `<input id="in-sp-title" type="text" placeholder="支出內容" class="f-input"><input id="in-sp-cost" type="number" placeholder="金額" class="f-input"><p class="text-[10px] font-black text-gray-400 mt-2 uppercase">支付人</p><select id="in-sp-payer" class="f-input">${MEMBERS.map(m=>`<option ${m===currentUser?'selected':''}>${m}</option>`).join('')}</select><div class="flex items-center justify-between py-2"><span class="text-xs font-black">分帳？</span><input type="checkbox" id="is-split" checked class="w-5 h-5 accent-emerald-600"></div><div id="part-ui" class="flex flex-wrap gap-2 mt-2">${MEMBERS.map(m => `<div class="member-chip selected" data-m="${m}">${m}</div>`).join('')}</div>`;
                 const box = document.getElementById('is-split'); const pUI = document.getElementById('part-ui');
                 box.onchange = () => pUI.style.display = box.checked ? 'flex' : 'none';
                 pUI.querySelectorAll('.member-chip').forEach(c => c.onclick = () => c.classList.toggle('selected'));
-                if(editIndex !== -1) {
-                    let s = (editItemType === 'pub') ? publicSpendings[editIndex] : privateSpendings[editIndex];
-                    document.getElementById('in-sp-title').value=s.title; document.getElementById('in-sp-cost').value=s.cost; document.getElementById('in-sp-payer').value=s.payer || currentUser; document.getElementById('is-split').checked = s.isSplit || false; pUI.style.display = s.isSplit ? 'flex' : 'none';
-                    if(s.isSplit) pUI.querySelectorAll('.member-chip').forEach(c => c.classList.toggle('selected', s.parts?.includes(c.dataset.m)));
-                }
+                if(editIndex !== -1) { let s = (editItemType === 'pub') ? publicSpendings[editIndex] : privateSpendings[editIndex]; document.getElementById('in-sp-title').value=s.title; document.getElementById('in-sp-cost').value=s.cost; document.getElementById('in-sp-payer').value=s.payer || currentUser; document.getElementById('is-split').checked = s.isSplit || false; pUI.style.display = s.isSplit ? 'flex' : 'none'; if(s.isSplit) pUI.querySelectorAll('.member-chip').forEach(c => c.classList.toggle('selected', s.parts?.includes(c.dataset.m))); }
             } else if (currentPage === 'checklist') {
                 container.innerHTML = `<input id="in-check" type="text" placeholder="物品名稱" class="f-input">`;
                 if(editIndex !== -1) document.getElementById('in-check').value = privateChecklist[editIndex].text;
@@ -336,10 +305,22 @@
         document.getElementById('nav-budget').onclick = () => { currentPage = 'budget'; syncAndRender(); };
         document.getElementById('nav-notes').onclick = () => { currentPage = 'notes'; syncAndRender(); };
         document.getElementById('header-title-btn').onclick = () => { if(confirm("換身分？")) { localStorage.clear(); location.reload(); } };
+        
+        // 核心修正：總覽地圖邏輯
         document.getElementById('route-map-btn').onclick = () => {
-            const locs = tripData[currentDay-1]?.activities.map(a => a.address || a.title) || [];
-            if(locs.length < 1) return alert("請先新增行程");
-            window.open(`http://googleusercontent.com/maps.google.com/dir/${locs.map(l => encodeURIComponent(l)).join('/')}`, '_blank');
+            const activities = tripData[currentDay-1]?.activities || [];
+            const locs = activities.map(a => a.address || a.title).filter(l => l);
+            if(locs.length < 2) return alert("請至少新增兩個地點才能生成路線");
+
+            const origin = encodeURIComponent(locs[0]);
+            const destination = encodeURIComponent(locs[locs.length - 1]);
+            let url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=transit`;
+
+            if(locs.length > 2) {
+                const waypoints = locs.slice(1, -1).map(l => encodeURIComponent(l)).join('|');
+                url += `&waypoints=${waypoints}`;
+            }
+            window.open(url, '_blank');
         };
 
         syncAndRender();
