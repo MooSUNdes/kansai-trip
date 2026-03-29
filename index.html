@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
-    <title> 關西櫻花之旅</title>
+    <title>🌸 關西櫻花之旅</title>
     
     <link rel="apple-touch-icon" href="icon.png">
     <link rel="icon" type="image/png" href="icon.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="關西旅遊">
+    <meta name="apple-mobile-web-app-title" content="關西櫻花">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -18,7 +18,7 @@
         html, body { font-family: 'Noto Sans TC', sans-serif; background-color: #F8FAFC; height: 100%; margin: 0; padding: 0; display: flex; flex-direction: column; overflow: hidden; }
         header { padding-top: env(safe-area-inset-top); background: white; z-index: 50; flex-shrink: 0; border-bottom: 1px solid #F1F5F9; }
         main { flex-grow: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-        footer { padding-bottom: env(safe-area-inset-bottom); height: calc(75px + env(safe-area-inset-bottom)); background: white; z-index: 50; flex-shrink: 0; border-top: 1px solid #F1F5F9; box-shadow: 0 -2px 10px rgba(0,0,0,0.03); }
+        footer { padding-bottom: env(safe-area-inset-bottom); height: calc(70px + env(safe-area-inset-bottom)); background: white; z-index: 50; flex-shrink: 0; border-top: 1px solid #F1F5F9; box-shadow: 0 -2px 10px rgba(0,0,0,0.03); }
         button, .member-chip, .day-tab-trigger { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
         .active-tab { background-color: #059669 !important; color: white !important; }
         .active-nav { color: #059669 !important; font-weight: 900; }
@@ -27,6 +27,11 @@
         .timeline-dot-美食 { background-color: #EA580C; }
         .timeline-dot-購物 { background-color: #DB2777; }
         .timeline-dot-移動 { background-color: #2563EB; }
+        .type-tag-景點 { background-color: #F5F3FF; color: #7C3AED; }
+        .type-tag-美食 { background-color: #FFF7ED; color: #EA580C; }
+        .type-tag-購物 { background-color: #FDF2F8; color: #DB2777; }
+        .type-tag-移動 { background-color: #EFF6FF; color: #2563EB; }
+        .hashtag-red { color: #ef4444; font-weight: 800; font-size: 11px; margin-top: 6px; display: inline-block; }
         .page-content { display: none; padding-bottom: 50px; }
         .page-content.active { display: block; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -38,13 +43,14 @@
         .pay-avatar { width: 28px; height: 28px; border-radius: 8px; font-size: 12px; font-weight: 900; display: flex; align-items: center; justify-content: center; }
         .paid { background-color: #10B981; color: white; transform: scale(1.1); }
         .unpaid { background-color: #F3F4F6; color: #9CA3AF; border: 1px solid #E5E7EB; }
+        .settled { opacity: 0.5; filter: grayscale(0.5); }
     </style>
 </head>
 <body>
 
     <div id="user-overlay" class="fixed inset-0 bg-white z-[300] flex flex-col items-center p-10 hidden">
         <h2 class="text-3xl font-black mb-2 text-emerald-600 italic mt-10 text-center">你是哪位成員？</h2>
-        <p class="text-gray-400 text-xs font-bold mb-8 uppercase tracking-widest text-center">CHOOSE YOUR IDENTITY</p>
+        <p class="text-gray-400 text-xs font-bold mb-8 uppercase tracking-widest text-center">WHO ARE YOU TODAY?</p>
         <div id="user-selector-grid" class="grid grid-cols-1 gap-4 w-full max-w-xs overflow-y-auto mb-10 pb-10"></div>
         <div class="fixed bottom-10 left-0 right-0 px-10 flex flex-col items-center">
             <button id="add-member-btn" class="w-full py-4 bg-gray-100 text-gray-500 rounded-2xl font-black text-sm mb-4">+ 新增團員</button>
@@ -92,10 +98,10 @@
 
     <footer>
         <div class="flex justify-between items-center text-gray-300 px-8 w-full">
-            <button id="nav-itinerary" class="nav-btn-item flex flex-col items-center py-3 active-nav"><span class="text-[9px] mt-1 font-bold">行程</span></button>
-            <button id="nav-checklist" class="nav-btn-item flex flex-col items-center py-3"><span class="text-[9px] mt-1 font-bold">行李</span></button>
-            <button id="nav-budget" class="nav-btn-item flex flex-col items-center py-3"><span class="text-[9px] mt-1 font-bold">分帳</span></button>
-            <button id="nav-notes" class="nav-btn-item flex flex-col items-center py-3"><span class="text-[9px] mt-1 font-bold">筆記</span></button>
+            <button id="nav-itinerary" class="nav-btn-item flex flex-col items-center py-3 active-nav"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg><span class="text-[9px] mt-1 font-bold">行程</span></button>
+            <button id="nav-checklist" class="nav-btn-item flex flex-col items-center py-3"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg><span class="text-[9px] mt-1 font-bold">行李</span></button>
+            <button id="nav-budget" class="nav-btn-item flex flex-col items-center py-3"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span class="text-[9px] mt-1 font-bold">分帳</span></button>
+            <button id="nav-notes" class="nav-btn-item flex flex-col items-center py-3"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg><span class="text-[9px] mt-1 font-bold">筆記</span></button>
         </div>
     </footer>
 
@@ -135,9 +141,9 @@
         
         const DEFAULT_CHECKLIST = [
             { text: "護照、日幣、信用卡", note: "確認護照效期大於6個月", done: false },
-            { text: "行動電源", note: "必須隨身！登機規定：嚴禁托運，<160WH", done: false },
+            { text: "行動電源", note: "必須隨身！登機規定：嚴禁托運", done: false },
             { text: "隨身液體規範", note: "單件<100ml，需透明拉鍊袋裝", done: false },
-            { text: "充電設備與網卡", note: "線材、快充頭、eSIM/網卡", done: false }
+            { text: "日本網卡 / eSIM", note: "先確認 QR Code 已取", done: false }
         ];
 
         let tripData = DATES.map((d, i) => ({ day: i+1, date: d, activities: [] }));
@@ -208,20 +214,25 @@
             const dayActs = tripData[currentDay-1]?.activities || [];
             list.innerHTML = dayActs.map((a, i) => {
                 const q = encodeURIComponent(a.address || a.title);
+                // 導航連結修復：徹底分離字串避開自動補全
+                const navUrl = "https" + "://www.google.com/maps/dir/?api=1&destination=" + q + "&travelmode=transit";
                 return `
                 <div class="flex items-start space-x-4">
                     <div class="flex flex-col items-center mt-1">
-                        <div class="w-10 h-10 rounded-full border-4 border-white shadow-md flex items-center justify-center text-white timeline-dot-${a.type}">${ICONS[a.type] || "📍"}</div>
+                        <div class="w-10 h-10 rounded-full border-4 border-white shadow-md flex flex-col items-center justify-center text-white timeline-dot-${a.type}">
+                            <span class="text-[10px] font-black leading-none mb-0.5">${i+1}</span>
+                            <span class="text-[10px]">${ICONS[a.type] || "📍"}</span>
+                        </div>
                         <span class="text-[9px] font-black text-gray-400 mt-2">${a.time}</span>
                     </div>
                     <div class="flex-grow bg-white rounded-3xl p-5 card-shadow border border-gray-50 relative text-left">
                         <div class="absolute top-4 right-4 flex space-x-2"><button class="edit-it-btn text-emerald-600 text-[10px] font-bold" data-idx="${i}">✎</button><button class="del-it-btn text-red-400 text-[10px] font-bold" data-idx="${i}">✕</button></div>
-                        <h3 class="font-black text-gray-900">${a.title}</h3>
-                        <p class="text-[9px] px-2 py-0.5 rounded-full font-black bg-gray-50 text-gray-400 mt-1 inline-block uppercase italic">${a.type}</p>
+                        <h3 class="font-black text-gray-900 pr-10">${a.title}</h3>
+                        <span class="text-[9px] px-2 py-0.5 rounded-full font-black type-tag-${a.type} mt-1 inline-block uppercase italic">${a.type}</span>
                         ${a.note ? `<div class="hashtag-red"># ${a.note}</div>` : ''}
                         <div class="flex justify-between items-center mt-4 pt-3 border-t border-gray-50">
                             <span class="text-[10px] font-black text-gray-400">預算 ¥${(a.cost || 0).toLocaleString()}</span>
-                            <button onclick="location.href='http://googleusercontent.com/maps.google.com/dir/?api=1&destination=${q}&travelmode=transit'" class="px-3 py-1 bg-emerald-50 rounded-xl text-emerald-600 text-[10px] font-black italic">導航 📍</button>
+                            <button onclick="location.href='${navUrl}'" class="px-3 py-1 bg-emerald-50 rounded-xl text-emerald-600 text-[10px] font-black italic">導航 📍</button>
                         </div>
                     </div>
                 </div>`}).join('') || `<p class="text-center text-gray-300 py-10 italic uppercase font-black">Day ${currentDay} No Events</p>`;
@@ -301,7 +312,7 @@
                 container.innerHTML = getInp('in-time', '時間(0900)') + `<select id="in-type" class="f-input"><option>景點</option><option>美食</option><option>購物</option><option>移動</option></select>` + getInp('in-title', '名稱') + getInp('in-note', '標籤') + getInp('in-address', '詳細地址') + getInp('in-cost', '預算費用', 'number');
                 if(editIndex !== -1) { const a = tripData[currentDay-1].activities[editIndex]; document.getElementById('in-time').value = a.time.replace(':',''); document.getElementById('in-title').value = a.title; document.getElementById('in-type').value = a.type; document.getElementById('in-note').value = a.note || ""; document.getElementById('in-address').value = a.address || ""; document.getElementById('in-cost').value = a.cost || 0; }
             } else if (currentPage === 'budget') {
-                container.innerHTML = getInp('in-sp-title', '支出項目') + getInp('in-sp-cost', '日幣金額', 'number') + `<p class="text-[10px] font-black text-gray-400 mt-2 uppercase text-center">代墊人</p><select id="in-sp-payer" class="f-input">${MEMBERS.map(m=>`<option ${m===currentUser?'selected':''}>${m}</option>`).join('')}</select><div class="flex items-center justify-between py-2"><span class="text-xs font-black">公費分帳？</span><input type="checkbox" id="is-split" checked class="w-5 h-5 accent-emerald-600"></div><div id="part-ui" class="flex flex-wrap gap-2 mt-2">${MEMBERS.map(m => `<div class="member-chip selected" data-m="${m}">${m}</div>`).join('')}</div>`;
+                container.innerHTML = getInp('in-sp-title', '支出項目') + getInp('in-sp-cost', '金額', 'number') + `<p class="text-[10px] font-black text-gray-400 mt-2 uppercase text-center">代墊人</p><select id="in-sp-payer" class="f-input">${MEMBERS.map(m=>`<option ${m===currentUser?'selected':''}>${m}</option>`).join('')}</select><div class="flex items-center justify-between py-2"><span class="text-xs font-black">公費分帳？</span><input type="checkbox" id="is-split" checked class="w-5 h-5 accent-emerald-600"></div><div id="part-ui" class="flex flex-wrap gap-2 mt-2">${MEMBERS.map(m => `<div class="member-chip selected" data-m="${m}">${m}</div>`).join('')}</div>`;
                 const box = document.getElementById('is-split'); const pUI = document.getElementById('part-ui');
                 box.onchange = () => pUI.style.display = box.checked ? 'flex' : 'none';
                 pUI.querySelectorAll('.member-chip').forEach(c => c.onclick = () => c.classList.toggle('selected'));
@@ -310,7 +321,7 @@
                 container.innerHTML = getInp('in-check-t', '物品名稱') + getInp('in-check-n', '備註');
                 if(editIndex !== -1) { document.getElementById('in-check-t').value = privateChecklist[editIndex].text; document.getElementById('in-check-n').value = privateChecklist[editIndex].note || ""; }
             } else if (currentPage === 'notes') {
-                container.innerHTML = getInp('in-nt-t', '標題') + getInp('in-nt-l', '網址');
+                container.innerHTML = getInp('in-nt-t', '攻略標題') + getInp('in-nt-l', '網址');
                 if(editIndex !== -1) { document.getElementById('in-nt-t').value = notes[editIndex].title; document.getElementById('in-nt-l').value = notes[editIndex].link; }
             }
             document.getElementById('add-modal').classList.add('active');
@@ -355,12 +366,11 @@
             const netBalance = {}; MEMBERS.forEach(m => netBalance[m] = 0);
             publicSpendings.forEach(s => { const whoPaid = s.whoPaid || []; const perCost = Math.round(s.cost / (s.parts.length || 1)); s.parts.forEach(m => { if (!whoPaid.includes(m)) { netBalance[m] -= perCost; netBalance[s.payer] += perCost; } }); });
             const creditors = [], debtors = [];
-            Object.keys(netBalance).forEach(m => { if (netBalance[m] > 5) creditors.push({ name: m, amount: netBalance[m] }); else if (netBalance[m] < -5) debtors.push({ name: m, amount: Math.abs(netBalance[m]) }); });
+            Object.keys(netBalance).forEach(m => { if (netBalance[m] > 0.1) creditors.push({ name: m, amount: netBalance[m] }); else if (netBalance[m] < -0.1) debtors.push({ name: m, amount: Math.abs(netBalance[m]) }); });
             const settlements = [];
-            const tC = creditors.map(c => ({...c})), tD = debtors.map(d => ({...d}));
             let ci = 0, di = 0;
-            while (ci < tC.length && di < tD.length) { const p = Math.min(tC[ci].amount, tD[di].amount); settlements.push({ from: tD[di].name, to: tC[ci].name, amount: p }); tC[ci].amount -= p; tD[di].amount -= p; if (tC[ci].amount <= 5) ci++; if (tD[di].amount <= 5) di++; }
-            content.innerHTML = `<div><h3 class="text-xs font-black text-gray-400 mb-3 uppercase tracking-wider">目前實質欠款</h3><div class="grid grid-cols-2 gap-2 mb-6">${MEMBERS.map(m => `<div class="bg-gray-50 p-3 rounded-2xl"><p class="text-[10px] font-bold text-gray-400">${m}</p><p class="text-sm font-black ${netBalance[m] > 5 ? 'text-emerald-600' : (netBalance[m] < -5 ? 'text-red-400' : 'text-gray-300')}">${netBalance[m] > 5 ? '+' : ''}${Math.round(netBalance[m]).toLocaleString()}</p></div>`).join('')}</div></div><div class="pt-2"><h3 class="text-xs font-black text-emerald-600 mb-3 uppercase tracking-wider text-center">💰 建議清帳路徑</h3><div class="space-y-2">${settlements.map(s => `<div class="flex items-center justify-between bg-emerald-50/50 border border-emerald-100 p-4 rounded-2xl shadow-sm text-left"><span class="font-bold text-gray-700 text-sm">${s.from} ➜ ${s.to}</span><span class="font-black text-emerald-600 text-sm">¥${Math.round(s.amount).toLocaleString()}</span></div>`).join('') || '<p class="text-center text-gray-300 py-8 italic text-sm">帳目已全部結清。🌸</p>'}</div></div>`;
+            while (ci < creditors.length && di < debtors.length) { const p = Math.min(creditors[ci].amount, debtors[di].amount); settlements.push({ from: debtors[di].name, to: creditors[ci].name, amount: Math.round(p) }); creditors[ci].amount -= p; debtors[di].amount -= p; if (creditors[ci].amount <= 0.1) ci++; if (debtors[di].amount <= 0.1) di++; }
+            content.innerHTML = `<div><h3 class="text-xs font-black text-gray-400 mb-3 uppercase tracking-wider text-center">目前實質欠款</h3><div class="grid grid-cols-2 gap-2 mb-6">${MEMBERS.map(m => `<div class="bg-gray-50 p-3 rounded-2xl"><p class="text-[10px] font-bold text-gray-400">${m}</p><p class="text-sm font-black ${netBalance[m] > 0.1 ? 'text-emerald-600' : (netBalance[m] < -0.1 ? 'text-red-400' : 'text-gray-300')}">${netBalance[m] > 0.1 ? '+' : ''}${Math.round(netBalance[m]).toLocaleString()}</p></div>`).join('')}</div></div><div class="pt-2"><h3 class="text-xs font-black text-emerald-600 mb-3 uppercase tracking-wider text-center">💰 建議還錢路徑</h3><div class="space-y-2">${settlements.map(s => `<div class="flex items-center justify-between bg-emerald-50/50 border border-emerald-100 p-4 rounded-2xl shadow-sm text-left"><span class="font-bold text-gray-700 text-sm">${s.from} ➜ ${s.to}</span><span class="font-black text-emerald-600 text-sm">¥${s.amount.toLocaleString()}</span></div>`).join('') || '<p class="text-center text-gray-300 py-8 italic text-sm">帳目已全部結清。🌸</p>'}</div></div>`;
             document.getElementById('summary-modal').classList.add('active');
         }
 
@@ -372,21 +382,21 @@
         document.getElementById('nav-checklist').onclick = () => { currentPage = 'checklist'; syncAndRender(); };
         document.getElementById('nav-budget').onclick = () => { currentPage = 'budget'; syncAndRender(); };
         document.getElementById('nav-notes').onclick = () => { currentPage = 'notes'; syncAndRender(); };
-        document.getElementById('weather-btn').onclick = () => { location.href = "https://tenki.jp/forecast/6/"; };
-        document.getElementById('header-title-btn').onclick = () => { if(confirm("切換使用者？")) { localStorage.removeItem('BH_User_v5'); currentUser = null; location.reload(); } };
+        document.getElementById('weather-btn').onclick = () => { location.href = "https" + "://tenki.jp/forecast/6/"; };
         
         document.getElementById('route-map-btn').onclick = () => {
             if (currentPage === 'itinerary') {
-                const activities = tripData[currentDay-1]?.activities || [];
-                const locs = activities.map(a => a.address || a.title).filter(l => l && l.length > 0);
-                if(locs.length < 1) return alert("今天還沒排行程喔！");
-                const origin = encodeURIComponent(locs[0]), destination = encodeURIComponent(locs[locs.length-1]);
-                let url = `http://googleusercontent.com/maps.google.com/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=transit`;
-                if(locs.length > 2) url += `&waypoints=${locs.slice(1, -1).map(l => encodeURIComponent(l)).join('|')}`;
+                const acts = tripData[currentDay-1]?.activities || [];
+                const locs = acts.map(a => a.address || a.title).filter(l => l);
+                if(locs.length < 1) return alert("今天還沒行程喔！");
+                const origin = encodeURIComponent(locs[0]), dest = encodeURIComponent(locs[locs.length-1]);
+                let url = "https" + "://www.google.com/maps/dir/?api=1&origin=" + origin + "&destination=" + dest + "&travelmode=transit";
+                if(locs.length > 2) url += "&waypoints=" + locs.slice(1, -1).map(l => encodeURIComponent(l)).join('|');
                 location.href = url;
             } else if (currentPage === 'budget') { showExpenseSummary(); }
         };
 
+        document.getElementById('header-title-btn').onclick = () => { if(confirm("切換使用者？")) { localStorage.removeItem('BH_User_v5'); location.reload(); } };
         syncAndRender();
     </script>
 </body>
