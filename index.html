@@ -53,7 +53,6 @@
         <div id="user-selector-grid" class="grid grid-cols-1 gap-4 w-full max-w-xs overflow-y-auto mb-10 pb-10"></div>
         <div class="fixed bottom-10 left-0 right-0 px-10 flex flex-col items-center">
             <button id="add-member-btn" class="w-full py-4 bg-gray-100 text-gray-500 rounded-2xl font-black text-sm mb-4">+ 新增團員</button>
-            <p class="text-[10px] text-gray-300 font-bold text-center">點擊人名進入，點擊圖示編輯</p>
         </div>
     </div>
 
@@ -76,7 +75,7 @@
 
     <main>
         <section id="page-itinerary" class="page-content active px-6 py-6"><div id="itinerary-list" class="space-y-8"></div></section>
-        <section id="page-checklist" class="page-content px-6 py-8"><h2 class="text-xl font-black mb-6 text-emerald-700">🧳 我的行李 (私有)</h2><div id="checklist-list" class="space-y-3"></div></section>
+        <section id="page-checklist" class="page-content px-6 py-8"><h2 class="text-xl font-black mb-6 text-emerald-700">🧳 我的行李 (個人)</h2><div id="checklist-list" class="space-y-3"></div></section>
         <section id="page-budget" class="page-content px-6 py-8">
             <h2 class="text-xl font-black mb-6 text-emerald-700">💰 個人支出結算</h2>
             <div class="bg-white p-6 rounded-[2rem] card-shadow border border-gray-50 text-center mb-6 grid grid-cols-2 gap-4 divide-x">
@@ -134,9 +133,21 @@
         let currentUser = localStorage.getItem('BH_User_v5');
         let currentDay = 1, currentPage = 'itinerary', editIndex = -1, editItemType = null;
         let MEMBERS = ["木木", "癡心杰對", "志在剛好", "阿汶美女"];
+        
+        // 預設行李清單
+        const DEFAULT_CHECKLIST = [
+            { text: "護照、日幣、信用卡", note: "確認護照效期大於6個月", done: false },
+            { text: "行動電源", note: "必須放在隨身行李！嚴禁托運", done: false },
+            { text: "隨身液體/噴霧", note: "單件<100ml，需裝入20cm透明拉鍊袋", done: false },
+            { text: "日本網卡 / eSIM", note: "先確認 QR Code 或實體卡已取", done: false },
+            { text: "充電頭、充電線", note: "", done: false },
+            { text: "VJW QR Code", note: "入境審查與海關申報截圖", done: false },
+            { text: "換洗衣物、貼身衣物", note: "關西4月溫差大，帶薄外套", done: false }
+        ];
+
         let tripData = DATES.map((d, i) => ({ day: i+1, date: d, activities: [] }));
         let notes = [], publicSpendings = [];
-        let privateChecklist = JSON.parse(localStorage.getItem('BH_Check_v5')) || [];
+        let privateChecklist = JSON.parse(localStorage.getItem('BH_Check_v5')) || DEFAULT_CHECKLIST;
         let privateSpendings = JSON.parse(localStorage.getItem('BH_Spend_v5')) || [];
 
         const syncAndRender = () => {
@@ -179,12 +190,10 @@
                 <div class="flex items-center space-x-2">
                     <button class="user-pick flex-grow bg-gray-50 border border-gray-100 p-5 rounded-2xl font-black text-gray-700 text-left" data-user="${m}">${m}</button>
                     <button class="edit-mem text-emerald-500 bg-emerald-50 w-14 h-14 rounded-2xl font-bold" data-idx="${idx}">✎</button>
-                    <button class="del-mem text-red-400 bg-red-50 w-14 h-14 rounded-2xl font-bold" data-idx="${idx}">✕</button>
                 </div>`).join('');
             document.getElementById('user-overlay').classList.remove('hidden');
             grid.querySelectorAll('.user-pick').forEach(btn => btn.onclick = () => { localStorage.setItem('BH_User_v5', btn.dataset.user); currentUser = btn.dataset.user; syncAndRender(); });
             grid.querySelectorAll('.edit-mem').forEach(btn => btn.onclick = () => { const newName = prompt("更改名稱：", MEMBERS[btn.dataset.idx]); if(newName) { MEMBERS[btn.dataset.idx] = newName.trim(); saveToCloud('members'); } });
-            grid.querySelectorAll('.del-mem').forEach(btn => btn.onclick = () => { if(confirm(`確定刪除 ${MEMBERS[btn.dataset.idx]} 嗎？`)) { MEMBERS.splice(btn.dataset.idx, 1); saveToCloud('members'); } });
         }
 
         document.getElementById('add-member-btn').onclick = () => { const n = prompt("新成員名稱："); if(n) { MEMBERS.push(n.trim()); saveToCloud('members'); } };
@@ -210,7 +219,7 @@
                         <span class="text-[9px] px-2 py-0.5 rounded-full font-black type-tag-${a.type} mt-1 inline-block uppercase italic">${a.type}</span>
                         ${a.note ? `<div class="hashtag-red"># ${a.note}</div>` : ''}
                         <div class="flex justify-between items-center mt-4 pt-3 border-t border-gray-50"><span class="text-[10px] font-black text-gray-400">預算 ¥${(a.cost || 0).toLocaleString()}</span>
-                            <button onclick="location.href='http://maps.google.com/maps?daddr=${encodeURIComponent(a.address || a.title)}&directionsmode=transit'" class="px-3 py-1 bg-emerald-50 rounded-xl text-emerald-600 text-[10px] font-black italic">導航 📍</button>
+                            <button onclick="location.href='https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(a.address || a.title)}'" class="px-3 py-1 bg-emerald-50 rounded-xl text-emerald-600 text-[10px] font-black italic">導航 📍</button>
                         </div>
                     </div>
                 </div>`).join('') || `<p class="text-center text-gray-300 py-10 italic uppercase font-black">No Events</p>`;
@@ -250,7 +259,18 @@
 
         function renderChecklist() {
             const list = document.getElementById('checklist-list');
-            list.innerHTML = privateChecklist.map((item, i) => `<div class="flex items-center bg-white p-4 rounded-2xl border border-gray-50 card-shadow"><label class="flex items-center flex-grow space-x-3"><input type="checkbox" ${item.done ? 'checked' : ''} class="ck-box w-5 h-5 accent-emerald-600" data-idx="${i}"><span class="text-sm font-black ${item.done ? 'text-gray-300 line-through italic' : ''}">${item.text}</span></label><div class="flex space-x-2"><button class="edit-ck-btn text-emerald-600 font-bold text-[10px]" data-idx="${i}">✎</button><button class="del-check text-red-300 font-bold" data-idx="${i}">✕</button></div></div>`).join('');
+            list.innerHTML = privateChecklist.map((item, i) => `
+                <div class="flex items-center bg-white p-5 rounded-3xl border border-gray-50 card-shadow">
+                    <input type="checkbox" ${item.done ? 'checked' : ''} class="ck-box w-6 h-6 accent-emerald-600 flex-shrink-0" data-idx="${i}">
+                    <div class="flex-grow ml-4">
+                        <p class="text-sm font-black ${item.done ? 'text-gray-300 line-through italic' : 'text-gray-800'}">${item.text}</p>
+                        ${item.note ? `<p class="text-[10px] font-bold text-emerald-500 mt-1 italic">🚩 ${item.note}</p>` : ''}
+                    </div>
+                    <div class="flex space-x-2 ml-2">
+                        <button class="edit-ck-btn text-emerald-600 font-bold text-xs" data-idx="${i}">✎</button>
+                        <button class="del-check text-red-300 font-bold" data-idx="${i}">✕</button>
+                    </div>
+                </div>`).join('');
             list.querySelectorAll('.ck-box').forEach(ck => ck.onchange = () => { privateChecklist[ck.dataset.idx].done = ck.checked; localStorage.setItem('BH_Check_v5', JSON.stringify(privateChecklist)); syncAndRender(); });
             list.querySelectorAll('.edit-ck-btn').forEach(b => b.onclick = () => { editIndex = parseInt(b.dataset.idx); editItemType='check'; openModal(); });
             list.querySelectorAll('.del-check').forEach(b => b.onclick = () => { privateChecklist.splice(parseInt(b.dataset.idx), 1); localStorage.setItem('BH_Check_v5', JSON.stringify(privateChecklist)); syncAndRender(); });
@@ -278,8 +298,8 @@
                 pUI.querySelectorAll('.member-chip').forEach(c => c.onclick = () => c.classList.toggle('selected'));
                 if(editIndex !== -1) { let s = (editItemType === 'pub') ? publicSpendings[editIndex] : privateSpendings[editIndex]; document.getElementById('in-sp-title').value=s.title; document.getElementById('in-sp-cost').value=s.cost; document.getElementById('in-sp-payer').value=s.payer || currentUser; document.getElementById('is-split').checked = s.isSplit || false; pUI.style.display = s.isSplit ? 'flex' : 'none'; if(s.isSplit) pUI.querySelectorAll('.member-chip').forEach(c => c.classList.toggle('selected', s.parts?.includes(c.dataset.m))); }
             } else if (currentPage === 'checklist') {
-                container.innerHTML = getInp('in-check', '物品名稱');
-                if(editIndex !== -1) document.getElementById('in-check').value = privateChecklist[editIndex].text;
+                container.innerHTML = getInp('in-check-t', '物品名稱') + getInp('in-check-n', '備註 (例：放隨身/托運)');
+                if(editIndex !== -1) { document.getElementById('in-check-t').value = privateChecklist[editIndex].text; document.getElementById('in-check-n').value = privateChecklist[editIndex].note || ""; }
             } else if (currentPage === 'notes') {
                 container.innerHTML = getInp('in-nt-t', '攻略標題') + getInp('in-nt-l', '網址');
                 if(editIndex !== -1) { document.getElementById('in-nt-t').value = notes[editIndex].title; document.getElementById('in-nt-l').value = notes[editIndex].link; }
@@ -311,8 +331,8 @@
                         localStorage.setItem('BH_Spend_v5', JSON.stringify(privateSpendings)); syncAndRender();
                     }
                 } else if (currentPage === 'checklist') {
-                    const val = getVal('in-check'); if(!val) return;
-                    if (editIndex === -1) privateChecklist.push({text: val, done: false}); else privateChecklist[editIndex].text = val;
+                    const t = getVal('in-check-t'), n = getVal('in-check-n'); if(!t) return;
+                    if (editIndex === -1) privateChecklist.push({text: t, note: n, done: false}); else privateChecklist[editIndex] = {text: t, note: n, done: privateChecklist[editIndex].done};
                     localStorage.setItem('BH_Check_v5', JSON.stringify(privateChecklist)); syncAndRender();
                 } else if (currentPage === 'notes') {
                     const t = getVal('in-nt-t'); if(t) { if (editIndex === -1) notes.push({title: t, link: getVal('in-nt-l')}); else notes[editIndex] = {title: t, link: getVal('in-nt-l')}; saveToCloud('notes'); }
@@ -348,11 +368,11 @@
                 const activities = tripData[currentDay-1]?.activities || [];
                 const locs = activities.map(a => a.address || a.title).filter(l => l && l.length > 0);
                 if(locs.length < 1) return alert("請先新增行程");
-                location.href = `http://maps.google.com/maps?saddr=${encodeURIComponent(locs[0])}&daddr=${encodeURIComponent(locs[locs.length-1])}&directionsmode=transit${locs.length>2 ? '&waypoints='+locs.slice(1,-1).map(l=>encodeURIComponent(l)).join('|') : ''}`;
+                window.open(`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(locs[0])}&destination=${encodeURIComponent(locs[locs.length-1])}&travelmode=transit${locs.length>2 ? '&waypoints='+locs.slice(1,-1).map(l=>encodeURIComponent(l)).join('|') : ''}`, '_blank');
             } else if (currentPage === 'budget') { showExpenseSummary(); }
         };
 
-        document.getElementById('header-title-btn').onclick = () => { if(confirm("換身分？")) { localStorage.removeItem('BH_User_v5'); currentUser = null; location.reload(); } };
+        document.getElementById('header-title-btn').onclick = () => { if(confirm("切換使用者？")) { localStorage.removeItem('BH_User_v5'); currentUser = null; location.reload(); } };
         
         syncAndRender();
     </script>
