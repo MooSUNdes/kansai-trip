@@ -10,10 +10,11 @@
         html, body { font-family: 'Noto Sans TC', sans-serif; background-color: #F8FAFC; height: 100%; margin: 0; padding: 0; display: flex; flex-direction: column; overflow: hidden; }
         header { padding-top: env(safe-area-inset-top); background: white; z-index: 50; flex-shrink: 0; border-bottom: 1px solid #F1F5F9; }
         main { flex-grow: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-        footer { padding-bottom: env(safe-area-inset-bottom); height: calc(65px + env(safe-area-inset-bottom)); background: white; z-index: 50; flex-shrink: 0; border-top: 1px solid #F1F5F9; box-shadow: 0 -2px 10px rgba(0,0,0,0.03); }
+        footer { padding-bottom: env(safe-area-inset-bottom); height: calc(70px + env(safe-area-inset-bottom)); background: white; z-index: 50; flex-shrink: 0; border-top: 1px solid #F1F5F9; box-shadow: 0 -2px 10px rgba(0,0,0,0.03); }
         button, .member-chip, .day-tab-trigger { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
         .active-tab { background-color: #059669 !important; color: white !important; }
-        .active-nav { color: #059669 !important; }
+        /* 底部選單激活狀態樣式 */
+        .active-nav { color: #059669 !important; font-weight: 900; }
         .card-shadow { box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05); }
         .timeline-dot-景點 { background-color: #7C3AED; }
         .timeline-dot-美食 { background-color: #EA580C; }
@@ -79,10 +80,10 @@
 
     <footer>
         <div class="flex justify-between items-center text-gray-300 px-8 w-full">
-            <button id="nav-itinerary" class="flex flex-col items-center active-nav py-3"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg><span class="text-[9px] mt-1 font-bold">行程</span></button>
-            <button id="nav-checklist" class="flex flex-col items-center py-3"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg><span class="text-[9px] mt-1 font-bold">行李</span></button>
-            <button id="nav-budget" class="flex flex-col items-center py-3"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span class="text-[9px] mt-1 font-bold">分帳</span></button>
-            <button id="nav-notes" class="flex flex-col items-center py-3"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg><span class="text-[9px] mt-1 font-bold">筆記</span></button>
+            <button id="nav-itinerary" class="nav-btn flex flex-col items-center py-3 active-nav"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg><span class="text-[9px] mt-1 font-bold">行程</span></button>
+            <button id="nav-checklist" class="nav-btn flex flex-col items-center py-3"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg><span class="text-[9px] mt-1 font-bold">行李</span></button>
+            <button id="nav-budget" class="nav-btn flex flex-col items-center py-3"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span class="text-[9px] mt-1 font-bold">分帳</span></button>
+            <button id="nav-notes" class="nav-btn flex flex-col items-center py-3"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg><span class="text-[9px] mt-1 font-bold">筆記</span></button>
         </div>
     </footer>
 
@@ -99,7 +100,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, onValue, set as fbSet, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getDatabase, ref, onValue, set as fbSet } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         const firebaseConfig = { databaseURL: "https://kansai-trip-6ae98-default-rtdb.firebaseio.com/" };
         const app = initializeApp(firebaseConfig);
@@ -129,6 +130,10 @@
             document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
             document.getElementById(`page-${currentPage}`).classList.add('active');
 
+            // 核心修正：同步底部按鈕高亮狀態
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active-nav'));
+            document.getElementById(`nav-${currentPage}`).classList.add('active-nav');
+
             if (hasDay) renderDayTabs();
             if (currentPage === 'itinerary') renderItinerary();
             else if (currentPage === 'checklist') renderChecklist();
@@ -141,25 +146,20 @@
             if(val && Array.isArray(val)) {
                 tripData = val;
                 while(tripData.length < 8) tripData.push({ day: tripData.length+1, activities: [] });
-            } else {
-                tripData = DATES.map((d, i) => ({ day: i+1, date: d, activities: [] }));
             }
             syncAndRender(); 
         });
         onValue(ref(db, 'notes'), (s) => { notes = s.val() || []; syncAndRender(); });
         onValue(ref(db, 'publicSpend'), (s) => { publicSpendings = s.val() || []; syncAndRender(); });
 
-        // 核心修正：解決最後一筆不同步問題
         const saveToCloud = (t) => {
-            if(t==='itinerary') {
-                fbSet(ref(db, 'tripData'), tripData);
-            }
+            if(t==='itinerary') fbSet(ref(db, 'tripData'), tripData);
             if(t==='notes') {
-                if(notes.length === 0) fbSet(ref(db, 'notes'), false); // 強制覆蓋為空
+                if(notes.length === 0) fbSet(ref(db, 'notes'), false);
                 else fbSet(ref(db, 'notes'), notes);
             }
             if(t==='publicSpend') {
-                if(publicSpendings.length === 0) fbSet(ref(db, 'publicSpend'), false); // 強制覆蓋為空
+                if(publicSpendings.length === 0) fbSet(ref(db, 'publicSpend'), false);
                 else fbSet(ref(db, 'publicSpend'), publicSpendings);
             }
         };
@@ -252,7 +252,7 @@
                     document.getElementById('in-time').value = a.time.replace(':',''); document.getElementById('in-title').value = a.title; document.getElementById('in-type').value = a.type; document.getElementById('in-note').value = a.note || ""; document.getElementById('in-address').value = a.address || ""; document.getElementById('in-cost').value = a.cost || 0;
                 }
             } else if (currentPage === 'budget') {
-                container.innerHTML = `<input id="in-sp-title" type="text" placeholder="內容" class="f-input"><input id="in-sp-cost" type="number" placeholder="金額" class="f-input"><p class="text-[10px] font-black text-gray-400 mt-2 uppercase">墊款人</p><select id="in-sp-payer" class="f-input">${MEMBERS.map(m=>`<option ${m===currentUser?'selected':''}>${m}</option>`).join('')}</select><div class="flex items-center justify-between py-2"><span class="text-xs font-black">公費分帳？</span><input type="checkbox" id="is-split" checked class="w-5 h-5 accent-emerald-600"></div><div id="part-ui" class="flex flex-wrap gap-2 mt-2">${MEMBERS.map(m => `<div class="member-chip selected" data-m="${m}">${m}</div>`).join('')}</div>`;
+                container.innerHTML = `<input id="in-sp-title" type="text" placeholder="支出內容" class="f-input"><input id="in-sp-cost" type="number" placeholder="金額" class="f-input"><p class="text-[10px] font-black text-gray-400 mt-2 uppercase">墊款人</p><select id="in-sp-payer" class="f-input">${MEMBERS.map(m=>`<option ${m===currentUser?'selected':''}>${m}</option>`).join('')}</select><div class="flex items-center justify-between py-2"><span class="text-xs font-black">分帳？</span><input type="checkbox" id="is-split" checked class="w-5 h-5 accent-emerald-600"></div><div id="part-ui" class="flex flex-wrap gap-2 mt-2">${MEMBERS.map(m => `<div class="member-chip selected" data-m="${m}">${m}</div>`).join('')}</div>`;
                 const box = document.getElementById('is-split'); const pUI = document.getElementById('part-ui');
                 box.onchange = () => pUI.style.display = box.checked ? 'flex' : 'none';
                 pUI.querySelectorAll('.member-chip').forEach(c => c.onclick = () => c.classList.toggle('selected'));
@@ -314,12 +314,14 @@
         document.getElementById('fab-add').addEventListener('click', openModal);
         document.getElementById('modal-cancel-btn').onclick = () => { document.getElementById('add-modal').classList.remove('active'); document.getElementById('add-modal').classList.add('hidden'); editIndex = -1; };
         document.getElementById('modal-save-btn').onclick = handleSave;
+        
+        // 綁定導航切換
         document.getElementById('nav-itinerary').onclick = () => { currentPage = 'itinerary'; syncAndRender(); };
         document.getElementById('nav-checklist').onclick = () => { currentPage = 'checklist'; syncAndRender(); };
         document.getElementById('nav-budget').onclick = () => { currentPage = 'budget'; syncAndRender(); };
         document.getElementById('nav-notes').onclick = () => { currentPage = 'notes'; syncAndRender(); };
-        document.getElementById('header-title-btn').onclick = () => { if(confirm("換身分？")) { localStorage.clear(); location.reload(); } };
         
+        document.getElementById('header-title-btn').onclick = () => { if(confirm("換身分？")) { localStorage.clear(); location.reload(); } };
         document.getElementById('route-map-btn').onclick = () => {
             const locs = tripData[currentDay-1]?.activities.map(a => a.address || a.title) || [];
             if(locs.length < 1) return alert("請先新增行程");
