@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>關西櫻花之旅 - 伯鴻精準結算版</title>
+    <title>關西櫻花之旅 - 團員管理版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
@@ -27,8 +27,8 @@
         .page-content { display: none; padding-bottom: 50px; }
         .page-content.active { display: block; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        #add-modal, #summary-modal { display: none; z-index: 200; }
-        #add-modal.active, #summary-modal.active { display: flex; }
+        #add-modal, #summary-modal, #user-modal { display: none; z-index: 200; }
+        #add-modal.active, #summary-modal.active, #user-modal.active { display: flex; }
         .f-input { background-color: #f3f4f6; border: none; border-radius: 1rem; padding: 0.8rem 1rem; font-size: 16px; font-weight: 700; width: 100%; margin-bottom: 8px; }
         .member-chip { border: 2px solid #e5e7eb; border-radius: 12px; padding: 6px 12px; font-size: 11px; font-weight: 800; cursor: pointer; }
         .member-chip.selected { background-color: #059669; color: white; border-color: #059669; }
@@ -40,9 +40,16 @@
 </head>
 <body>
 
-    <div id="user-overlay" class="fixed inset-0 bg-white z-[300] flex flex-col items-center justify-center p-10 hidden">
-        <h2 class="text-2xl font-black mb-8 text-emerald-600 italic text-center">你是哪位團員？</h2>
-        <div id="user-selector-grid" class="grid grid-cols-2 gap-4 w-full"></div>
+    <div id="user-overlay" class="fixed inset-0 bg-white z-[300] flex flex-col items-center p-10 hidden">
+        <h2 class="text-3xl font-black mb-2 text-emerald-600 italic mt-10">你是誰？</h2>
+        <p class="text-gray-400 text-xs font-bold mb-8 uppercase tracking-widest">WHO ARE YOU TODAY?</p>
+        
+        <div id="user-selector-grid" class="grid grid-cols-1 gap-4 w-full max-w-xs overflow-y-auto mb-10 pb-10"></div>
+        
+        <div class="fixed bottom-10 left-0 right-0 px-10 flex flex-col items-center">
+            <button id="add-member-btn" class="w-full py-4 bg-gray-100 text-gray-500 rounded-2xl font-black text-sm mb-4">+ 新增團員</button>
+            <p class="text-[10px] text-gray-300 font-bold">點擊人名進入，點擊圖示編輯</p>
+        </div>
     </div>
 
     <header class="px-6 pb-4 flex justify-between items-end">
@@ -116,19 +123,19 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        const MEMBERS = ["木木", "癡心杰對", "志在剛好", "阿汶美女"];
         const DATES = ["4/13", "4/14", "4/15", "4/16", "4/17", "4/18", "4/19", "4/20"];
         const ICONS = { "景點": "⛩️", "美食": "🍜", "購物": "🛍️", "移動": "🚃" };
         
         let currentUser = localStorage.getItem('BH_User_v5');
         let currentDay = 1, currentPage = 'itinerary', editIndex = -1, editItemType = null;
+        let MEMBERS = ["木木", "癡心杰對", "志在剛好", "阿汶美女"]; // 預設值
         let tripData = DATES.map((d, i) => ({ day: i+1, date: d, activities: [] }));
         let notes = [], publicSpendings = [];
         let privateChecklist = JSON.parse(localStorage.getItem('BH_Check_v5')) || [];
         let privateSpendings = JSON.parse(localStorage.getItem('BH_Spend_v5')) || [];
 
         const syncAndRender = () => {
-            if (!currentUser) { showUserOverlay(); return; }
+            if (!currentUser) { renderUserSelector(); return; }
             document.getElementById('user-overlay').classList.add('hidden');
             document.getElementById('user-info-text').innerText = `團員：${currentUser}`;
             document.getElementById('header-day-num').innerText = currentDay;
@@ -147,6 +154,13 @@
             else if (currentPage === 'notes') renderNotes();
         };
 
+        // 監聽雲端名單
+        onValue(ref(db, 'members'), (s) => { 
+            if(s.val()) { MEMBERS = s.val(); } 
+            if(!currentUser) renderUserSelector();
+            else syncAndRender();
+        });
+
         onValue(ref(db, 'tripData'), (s) => { 
             const val = s.val();
             if(val && Array.isArray(val)) { tripData = val; while(tripData.length < 8) tripData.push({ day: tripData.length+1, activities: [] }); }
@@ -159,9 +173,39 @@
             if(t==='itinerary') fbSet(ref(db, 'tripData'), tripData);
             if(t==='notes') fbSet(ref(db, 'notes'), notes.length === 0 ? false : notes);
             if(t==='publicSpend') fbSet(ref(db, 'publicSpend'), publicSpendings.length === 0 ? false : publicSpendings);
+            if(t==='members') fbSet(ref(db, 'members'), MEMBERS);
         };
 
         const formatTime = (v) => { let d = v.replace(/\D/g, '').padStart(4, '0'); return d.substring(0,2) + ":" + d.substring(2,4); };
+
+        // --- 核心更新：渲染成員選擇與管理 ---
+        function renderUserSelector() {
+            const grid = document.getElementById('user-selector-grid');
+            grid.innerHTML = MEMBERS.map((m, idx) => `
+                <div class="flex items-center space-x-2">
+                    <button class="user-pick flex-grow bg-gray-50 border border-gray-100 p-5 rounded-2xl font-black text-gray-700 text-left active:bg-emerald-50 active:border-emerald-200 transition-all" data-user="${m}">
+                        ${m}
+                    </button>
+                    <button class="edit-mem text-emerald-500 bg-emerald-50 w-14 h-14 rounded-2xl font-bold" data-idx="${idx}">✎</button>
+                    <button class="del-mem text-red-400 bg-red-50 w-14 h-14 rounded-2xl font-bold" data-idx="${idx}">✕</button>
+                </div>
+            `).join('');
+            document.getElementById('user-overlay').classList.remove('hidden');
+            
+            grid.querySelectorAll('.user-pick').forEach(btn => btn.onclick = () => { localStorage.setItem('BH_User_v5', btn.dataset.user); currentUser = btn.dataset.user; syncAndRender(); });
+            grid.querySelectorAll('.edit-mem').forEach(btn => btn.onclick = () => {
+                const newName = prompt("更改團員名稱：", MEMBERS[btn.dataset.idx]);
+                if(newName && newName.trim()) { MEMBERS[btn.dataset.idx] = newName.trim(); saveToCloud('members'); }
+            });
+            grid.querySelectorAll('.del-mem').forEach(btn => btn.onclick = () => {
+                if(confirm(`確定刪除 ${MEMBERS[btn.dataset.idx]} 嗎？\n這將影響分帳計算！`)) { MEMBERS.splice(btn.dataset.idx, 1); saveToCloud('members'); }
+            });
+        }
+
+        document.getElementById('add-member-btn').onclick = () => {
+            const name = prompt("請輸入新團員名稱：");
+            if(name && name.trim()) { MEMBERS.push(name.trim()); saveToCloud('members'); }
+        };
 
         function renderDayTabs() {
             const nav = document.getElementById('day-tabs-nav');
@@ -186,7 +230,7 @@
                         <span class="text-[9px] px-2 py-0.5 rounded-full font-black type-tag-${a.type} mt-1 inline-block uppercase italic">${a.type}</span>
                         ${a.note ? `<div class="hashtag-red"># ${a.note}</div>` : ''}
                         <div class="flex justify-between items-center mt-4 pt-3 border-t border-gray-50"><span class="text-[10px] font-black text-gray-400">預算 ¥${(a.cost || 0).toLocaleString()}</span>
-                            <button onclick="location.href='https://www.google.com/maps/dir/?api=1&destination=${q}&travelmode=transit'" class="px-3 py-1 bg-emerald-50 rounded-xl text-emerald-600 text-[10px] font-black italic">導航 📍</button>
+                            <button onclick="location.href='http://googleusercontent.com/maps.google.com/dir/?api=1&destination=${q}&travelmode=transit'" class="px-3 py-1 bg-emerald-50 rounded-xl text-emerald-600 text-[10px] font-black italic">導航 📍</button>
                         </div>
                     </div>
                 </div>`}).join('') || `<p class="text-center text-gray-300 py-10 italic uppercase font-black">Day ${currentDay} No Events</p>`;
@@ -198,13 +242,9 @@
             const list = document.getElementById('budget-list');
             const dayPub = publicSpendings.filter(s => s.day === currentDay);
             const dayPriv = privateSpendings.filter(s => s.day === currentDay);
-            let todaySum = 0;
-            dayPub.filter(x => x.parts?.includes(currentUser)).forEach(x => todaySum += Math.round(x.cost / (x.parts.length || 1)));
-            dayPriv.forEach(x => todaySum += (x.cost || 0));
             let totalSum = 0;
             publicSpendings.filter(x => x.parts?.includes(currentUser)).forEach(x => totalSum += Math.round(x.cost / (x.parts.length || 1)));
             privateSpendings.forEach(x => totalSum += (x.cost || 0));
-            document.getElementById('disp-today-cost').innerText = `¥${todaySum.toLocaleString()}`;
             document.getElementById('disp-total-cost').innerText = `¥${totalSum.toLocaleString()}`;
 
             list.innerHTML = [
@@ -216,7 +256,7 @@
                     return `
                     <div class="bg-blue-50/50 p-5 rounded-3xl border-2 border-blue-100 relative ${whoPaid.length === s.parts.length ? 'settled' : ''}">
                         <div class="flex items-center justify-between mb-4"><div class="flex items-center space-x-3"><input type="checkbox" class="sync-check w-7 h-7 accent-emerald-600" ${isIPaid ? 'checked' : ''} ${isPayer ? 'disabled' : ''} data-id="${realIdx}"><h4 class="font-black text-gray-800 text-lg">${s.title} <span class="text-blue-600">¥${s.cost.toLocaleString()}</span></h4></div><div class="flex space-x-2"><button class="edit-sp-btn text-blue-400 font-bold" data-idx="${realIdx}" data-type="pub">✎</button><button class="del-sp-btn text-red-300 font-bold" data-idx="${realIdx}" data-type="pub">✕</button></div></div>
-                        <div class="flex justify-between items-center mt-3 pt-3 border-t border-blue-100/50"><p class="text-[10px] font-bold text-blue-400 uppercase italic">由 ${s.payer} 代墊 | 應付: <span class="text-emerald-600 font-black text-xs">¥${Math.round(s.cost/(s.parts.length||1))}</span></p><div class="flex space-x-1.5">${s.parts.map(m => `<div class="pay-avatar ${whoPaid.includes(m) ? 'paid' : 'unpaid'} border-2 border-white shadow-sm">${whoPaid.includes(m) ? '✓' : m.substring(0,1)}</div>`).join('')}</div></div>
+                        <div class="flex justify-between items-center mt-3 pt-3 border-t border-blue-100/50"><p class="text-[10px] font-bold text-blue-400 uppercase italic">由 ${s.payer} 代墊</p><div class="flex space-x-1.5">${s.parts.map(m => `<div class="pay-avatar ${whoPaid.includes(m) ? 'paid' : 'unpaid'} border-2 border-white shadow-sm">${whoPaid.includes(m) ? '✓' : m.substring(0,1)}</div>`).join('')}</div></div>
                     </div>`}),
                 ...dayPriv.map(s => `<div class="bg-white p-5 rounded-3xl card-shadow border border-gray-100 relative"><div class="absolute top-4 right-4 flex space-x-2"><button class="edit-sp-btn icon-btn text-emerald-400" data-idx="${privateSpendings.indexOf(s)}" data-type="pri">✎</button><button class="del-sp-btn icon-btn text-red-300" data-idx="${privateSpendings.indexOf(s)}" data-type="pri">✕</button></div><h4 class="font-black text-gray-800">${s.title} <span class="text-emerald-600 ml-1">¥${s.cost.toLocaleString()}</span></h4><p class="text-[9px] font-bold text-gray-400 uppercase italic mt-1 font-black">個人私帳項目</p></div>`)
             ].join('') || `<p class="text-center text-gray-300 py-10 italic uppercase font-black">No Spending</p>`;
@@ -265,7 +305,7 @@
                 container.innerHTML = getInp('in-check', '物品名稱');
                 if(editIndex !== -1) document.getElementById('in-check').value = privateChecklist[editIndex].text;
             } else if (currentPage === 'notes') {
-                container.innerHTML = getInp('in-nt-t', '攻略標題') + getInp('in-nt-l', '網址');
+                container.innerHTML = getInp('in-nt-t', '標題') + getInp('in-nt-l', '網址');
                 if(editIndex !== -1) { document.getElementById('in-nt-t').value = notes[editIndex].title; document.getElementById('in-nt-l').value = notes[editIndex].link; }
             }
             document.getElementById('add-modal').classList.add('active');
@@ -305,92 +345,32 @@
             } catch(e) { alert("儲存失敗"); }
         }
 
-        // --- 核心優化：智慧清算 (僅計算未打勾的實際債務) ---
         function showExpenseSummary() {
             const content = document.getElementById('summary-content');
-            const netBalance = {}; 
-            MEMBERS.forEach(m => netBalance[m] = 0);
-            
+            const netBalance = {}; MEMBERS.forEach(m => netBalance[m] = 0);
             publicSpendings.forEach(s => {
                 const whoPaid = s.whoPaid || [];
                 const perCost = Math.round(s.cost / (s.parts.length || 1));
-                
-                s.parts.forEach(m => {
-                    // 修正關鍵：如果成員沒在 whoPaid 裡面，代表這筆「欠款」還在，才列入計算
-                    if (!whoPaid.includes(m)) {
-                        netBalance[m] -= perCost;      
-                        netBalance[s.payer] += perCost; 
-                    }
-                });
+                s.parts.forEach(m => { if (!whoPaid.includes(m)) { netBalance[m] -= perCost; netBalance[s.payer] += perCost; } });
             });
-
             const creditors = [], debtors = [];
-            Object.keys(netBalance).forEach(m => {
-                if (netBalance[m] > 5) creditors.push({ name: m, amount: netBalance[m] });
-                else if (netBalance[m] < -5) debtors.push({ name: m, amount: Math.abs(netBalance[m]) });
-            });
-
+            Object.keys(netBalance).forEach(m => { if (netBalance[m] > 5) creditors.push({ name: m, amount: netBalance[m] }); else if (netBalance[m] < -5) debtors.push({ name: m, amount: Math.abs(netBalance[m]) }); });
             const settlements = [];
-            const tempCreditors = creditors.map(c => ({...c}));
-            const tempDebtors = debtors.map(d => ({...d}));
-            let cIdx = 0, dIdx = 0;
-
-            while (cIdx < tempCreditors.length && dIdx < tempDebtors.length) {
-                const pay = Math.min(tempCreditors[cIdx].amount, tempDebtors[dIdx].amount);
-                settlements.push({ from: tempDebtors[dIdx].name, to: tempCreditors[cIdx].name, amount: pay });
-                tempCreditors[cIdx].amount -= pay;
-                tempDebtors[dIdx].amount -= pay;
-                if (tempCreditors[cIdx].amount <= 5) cIdx++;
-                if (tempDebtors[dIdx].amount <= 5) dIdx++;
-            }
-
-            content.innerHTML = `
-                <div>
-                    <h3 class="text-xs font-black text-gray-400 mb-3 uppercase tracking-wider">目前實質欠款 (排除已打勾項)</h3>
-                    <div class="grid grid-cols-2 gap-2 mb-6">
-                        ${MEMBERS.map(m => `
-                            <div class="bg-gray-50 p-3 rounded-2xl">
-                                <p class="text-[10px] font-bold text-gray-400">${m}</p>
-                                <p class="text-sm font-black ${netBalance[m] > 5 ? 'text-emerald-600' : (netBalance[m] < -5 ? 'text-red-400' : 'text-gray-300')}">
-                                    ${netBalance[m] > 5 ? '+' : ''}${Math.round(netBalance[m]).toLocaleString()}
-                                </p>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-                <div class="pt-2">
-                    <h3 class="text-xs font-black text-emerald-600 mb-3 uppercase tracking-wider">💰 建議清帳路徑</h3>
-                    <div class="space-y-2">
-                        ${settlements.map(s => `
-                            <div class="flex items-center justify-between bg-emerald-50/50 border border-emerald-100 p-4 rounded-2xl shadow-sm">
-                                <span class="font-bold text-gray-700 text-sm">${s.from} <span class="text-gray-300 mx-1">➜</span> ${s.to}</span>
-                                <span class="font-black text-emerald-600 text-sm">¥${Math.round(s.amount).toLocaleString()}</span>
-                            </div>
-                        `).join('') || '<p class="text-center text-gray-300 py-8 italic text-sm">太棒了！目前的帳目已全部結清。🌸</p>'}
-                    </div>
-                    <p class="text-[9px] text-gray-400 mt-4 text-center leading-relaxed">※ 結算建議會自動抵銷成員間的債務。<br>只要團員對每筆開銷「打勾」，該筆債務就會從此表消失。</p>
-                </div>
-            `;
+            const tC = creditors.map(c => ({...c})), tD = debtors.map(d => ({...d}));
+            let ci = 0, di = 0;
+            while (ci < tC.length && di < tD.length) { const p = Math.min(tC[ci].amount, tD[di].amount); settlements.push({ from: tD[di].name, to: tC[ci].name, amount: p }); tC[ci].amount -= p; tD[di].amount -= p; if (tC[ci].amount <= 5) ci++; if (tD[di].amount <= 5) di++; }
+            content.innerHTML = `<div><h3 class="text-xs font-black text-gray-400 mb-3 uppercase tracking-wider">目前實質欠款</h3><div class="grid grid-cols-2 gap-2 mb-6">${MEMBERS.map(m => `<div class="bg-gray-50 p-3 rounded-2xl"><p class="text-[10px] font-bold text-gray-400">${m}</p><p class="text-sm font-black ${netBalance[m] > 5 ? 'text-emerald-600' : (netBalance[m] < -5 ? 'text-red-400' : 'text-gray-300')}">${netBalance[m] > 5 ? '+' : ''}${Math.round(netBalance[m]).toLocaleString()}</p></div>`).join('')}</div></div><div class="pt-2"><h3 class="text-xs font-black text-emerald-600 mb-3 uppercase tracking-wider">💰 建議清帳路徑</h3><div class="space-y-2">${settlements.map(s => `<div class="flex items-center justify-between bg-emerald-50/50 border border-emerald-100 p-4 rounded-2xl shadow-sm"><span class="font-bold text-gray-700 text-sm">${s.from} ➜ ${s.to}</span><span class="font-black text-emerald-600 text-sm">¥${Math.round(s.amount).toLocaleString()}</span></div>`).join('') || '<p class="text-center text-gray-300 py-8 italic text-sm">目前的帳目已全部結清。🌸</p>'}</div></div>`;
             document.getElementById('summary-modal').classList.add('active');
-        }
-
-        function showUserOverlay() {
-            const grid = document.getElementById('user-selector-grid');
-            grid.innerHTML = MEMBERS.map(m => `<button class="user-pick bg-gray-100 p-4 rounded-2xl font-black text-gray-600" data-user="${m}">${m}</button>`).join('');
-            document.getElementById('user-overlay').classList.remove('hidden');
-            grid.querySelectorAll('.user-pick').forEach(btn => btn.onclick = () => { localStorage.setItem('BH_User_v5', btn.dataset.user); location.reload(); });
         }
 
         document.getElementById('fab-add').onclick = openModal;
         document.getElementById('modal-cancel-btn').onclick = () => document.getElementById('add-modal').classList.remove('active');
         document.getElementById('modal-save-btn').onclick = handleSave;
         document.getElementById('close-summary-btn').onclick = () => document.getElementById('summary-modal').classList.remove('active');
-        
         document.getElementById('nav-itinerary').onclick = () => { currentPage = 'itinerary'; syncAndRender(); };
         document.getElementById('nav-checklist').onclick = () => { currentPage = 'checklist'; syncAndRender(); };
         document.getElementById('nav-budget').onclick = () => { currentPage = 'budget'; syncAndRender(); };
         document.getElementById('nav-notes').onclick = () => { currentPage = 'notes'; syncAndRender(); };
-        
         document.getElementById('route-map-btn').onclick = () => {
             if (currentPage === 'itinerary') {
                 const activities = tripData[currentDay-1]?.activities || [];
@@ -402,12 +382,11 @@
                 if(locs.length > 2) url += `&waypoints=${locs.slice(1,-1).map(l=>encodeURIComponent(l)).join('|')}`;
                 url += `&travelmode=transit`;
                 location.href = url;
-            } else if (currentPage === 'budget') {
-                showExpenseSummary();
-            }
+            } else if (currentPage === 'budget') { showExpenseSummary(); }
         };
 
-        document.getElementById('header-title-btn').onclick = () => { if(confirm("換身分？")) { localStorage.clear(); location.reload(); } };
+        document.getElementById('header-title-btn').onclick = () => { if(confirm("換身分？")) { localStorage.removeItem('BH_User_v5'); location.reload(); } };
+        
         syncAndRender();
     </script>
 </body>
