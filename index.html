@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>關西櫻花之旅 - 伯鴻精準對帳版</title>
+    <title>關西櫻花之旅 - 伯鴻終極實用版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
@@ -26,7 +26,6 @@
         .hashtag-red { color: #ef4444; font-weight: 800; font-size: 11px; margin-top: 6px; display: inline-block; }
         .page-content { display: none; padding-bottom: 50px; }
         .page-content.active { display: block; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
         #add-modal, #summary-modal { display: none; z-index: 200; }
         #add-modal.active, #summary-modal.active { display: flex; }
         .f-input { background-color: #f3f4f6; border: none; border-radius: 1rem; padding: 0.8rem 1rem; font-size: 16px; font-weight: 700; width: 100%; margin-bottom: 8px; }
@@ -58,7 +57,7 @@
     <div id="day-bar" class="bg-white border-b border-gray-50 flex-shrink-0 hidden">
         <div class="flex items-center px-4 py-3 space-x-3">
             <nav id="day-tabs-nav" class="flex-grow flex space-x-2 overflow-x-auto no-scrollbar pb-1"></nav>
-            <button id="route-map-btn" class="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-blue-500 text-white shadow-md active:scale-90 text-lg">🗺️</button>
+            <button id="route-map-btn" class="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-blue-500 text-white shadow-md active:scale-90 text-lg"></button>
         </div>
     </div>
 
@@ -95,7 +94,7 @@
             <div id="modal-fields-container"></div>
             <div class="flex space-x-3 mt-8">
                 <button id="modal-cancel-btn" class="flex-1 py-4 text-sm font-black text-gray-400">取消</button>
-                <button id="modal-save-btn" class="flex-1 py-4 bg-emerald-600 text-white text-sm font-black rounded-2xl shadow-lg active:bg-emerald-700">確認儲存</button>
+                <button id="modal-save-btn" class="flex-1 py-4 bg-emerald-600 text-white text-sm font-black rounded-2xl shadow-lg">確認儲存</button>
             </div>
         </div>
     </div>
@@ -103,9 +102,8 @@
     <div id="summary-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm items-center justify-center p-6 hidden">
         <div class="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl max-h-[85vh] overflow-y-auto relative">
             <button id="close-summary-btn" class="absolute top-6 right-6 text-gray-300 font-bold text-xl">✕</button>
-            <h2 class="text-xl font-black mb-6 text-blue-600 italic">旅程花費總覽 📊</h2>
-            <div id="summary-content" class="space-y-6">
-                </div>
+            <h2 class="text-xl font-black mb-6 text-emerald-600 italic">旅程最終清算 📊</h2>
+            <div id="summary-content" class="space-y-6 pb-4"></div>
         </div>
     </div>
 
@@ -134,20 +132,17 @@
             document.getElementById('user-info-text').innerText = `團員：${currentUser}`;
             document.getElementById('header-day-num').innerText = currentDay;
             document.getElementById('header-date-str').innerText = DATES[currentDay-1];
-            
             const hasDay = ['itinerary','budget'].includes(currentPage);
             document.getElementById('day-bar').style.display = hasDay ? 'block' : 'none';
             
-            // 動態更換總覽按鈕圖示
             const routeBtn = document.getElementById('route-map-btn');
-            if (currentPage === 'itinerary') routeBtn.innerText = "🗺️";
-            else if (currentPage === 'budget') routeBtn.innerText = "📊";
+            routeBtn.innerText = currentPage === 'itinerary' ? "🗺️" : "📊";
 
             document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
             document.getElementById(`page-${currentPage}`).classList.add('active');
             document.querySelectorAll('.nav-btn-item').forEach(btn => btn.classList.remove('active-nav'));
             document.getElementById(`nav-${currentPage}`).classList.add('active-nav');
-
+            
             if (hasDay) renderDayTabs();
             if (currentPage === 'itinerary') renderItinerary();
             else if (currentPage === 'checklist') renderChecklist();
@@ -180,7 +175,11 @@
         function renderItinerary() {
             const list = document.getElementById('itinerary-list');
             const dayActs = tripData[currentDay-1]?.activities || [];
-            list.innerHTML = dayActs.map((a, i) => `
+            list.innerHTML = dayActs.map((a, i) => {
+                const q = encodeURIComponent(a.address || a.title);
+                // 修正：跳轉 Google Maps 不留白分頁
+                const mapLink = `https://www.google.com/maps/dir/?api=1&destination=${q}&travelmode=transit`;
+                return `
                 <div class="flex items-start space-x-4">
                     <div class="flex flex-col items-center mt-1">
                         <div class="w-10 h-10 rounded-full border-4 border-white shadow-md flex items-center justify-center text-white timeline-dot-${a.type}"><span class="text-[10px] font-black leading-none mb-0.5">${i+1}</span><span class="text-xs">${ICONS[a.type] || "📍"}</span></div>
@@ -192,10 +191,10 @@
                         <span class="text-[9px] px-2 py-0.5 rounded-full font-black type-tag-${a.type} mt-1 inline-block uppercase italic">${a.type}</span>
                         ${a.note ? `<div class="hashtag-red"># ${a.note}</div>` : ''}
                         <div class="flex justify-between items-center mt-4 pt-3 border-t border-gray-50"><span class="text-[10px] font-black text-gray-400">預算 ¥${(a.cost || 0).toLocaleString()}</span>
-                            <a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent((a.address || a.title))}&travelmode=transit" target="_blank" class="px-3 py-1 bg-emerald-50 rounded-xl text-emerald-600 text-[10px] font-black italic">導航</a>
+                            <button onclick="location.href='${mapLink}'" class="px-3 py-1 bg-emerald-50 rounded-xl text-emerald-600 text-[10px] font-black italic">導航 📍</button>
                         </div>
                     </div>
-                </div>`).join('') || `<p class="text-center text-gray-300 py-10 italic uppercase font-black">Day ${currentDay} No Events</p>`;
+                </div>`}).join('') || `<p class="text-center text-gray-300 py-10 italic uppercase font-black">Day ${currentDay} No Events</p>`;
             list.querySelectorAll('.edit-it-btn').forEach(b => b.onclick = () => { editIndex = parseInt(b.dataset.idx); editItemType='itinerary'; openModal(); });
             list.querySelectorAll('.del-it-btn').forEach(b => b.onclick = () => { if(confirm("確定刪除？")) { tripData[currentDay-1].activities.splice(parseInt(b.dataset.idx), 1); saveToCloud('itinerary'); } });
         }
@@ -259,12 +258,11 @@
             const modalTitle = document.getElementById('modal-title-text');
             modalTitle.innerText = editIndex === -1 ? "✨ 新增項目" : "✎ 編輯項目";
             const getInp = (id, p, type="text") => `<input id="${id}" type="${type}" placeholder="${p}" class="f-input">`;
-
             if (currentPage === 'itinerary') {
-                container.innerHTML = getInp('in-time', '時間(0900)') + `<select id="in-type" class="f-input"><option>景點</option><option>美食</option><option>購物</option><option>移動</option></select>` + getInp('in-title', '名稱') + getInp('in-note', '標籤') + getInp('in-address', '地址') + getInp('in-cost', '費用', 'number');
+                container.innerHTML = getInp('in-time', '時間(0900)') + `<select id="in-type" class="f-input"><option>景點</option><option>美食</option><option>購物</option><option>移動</option></select>` + getInp('in-title', '名稱') + getInp('in-note', '標籤') + getInp('in-address', '詳細地址') + getInp('in-cost', '預算費用', 'number');
                 if(editIndex !== -1) { const a = tripData[currentDay-1].activities[editIndex]; document.getElementById('in-time').value = a.time.replace(':',''); document.getElementById('in-title').value = a.title; document.getElementById('in-type').value = a.type; document.getElementById('in-note').value = a.note || ""; document.getElementById('in-address').value = a.address || ""; document.getElementById('in-cost').value = a.cost || 0; }
             } else if (currentPage === 'budget') {
-                container.innerHTML = getInp('in-sp-title', '支出項目') + getInp('in-sp-cost', '金額', 'number') + `<p class="text-[10px] font-black text-gray-400 mt-2 uppercase">代墊人</p><select id="in-sp-payer" class="f-input">${MEMBERS.map(m=>`<option ${m===currentUser?'selected':''}>${m}</option>`).join('')}</select><div class="flex items-center justify-between py-2"><span class="text-xs font-black">公費分帳？</span><input type="checkbox" id="is-split" checked class="w-5 h-5 accent-emerald-600"></div><div id="part-ui" class="flex flex-wrap gap-2 mt-2">${MEMBERS.map(m => `<div class="member-chip selected" data-m="${m}">${m}</div>`).join('')}</div>`;
+                container.innerHTML = getInp('in-sp-title', '支出項目') + getInp('in-sp-cost', '日幣金額', 'number') + `<p class="text-[10px] font-black text-gray-400 mt-2 uppercase">代墊人</p><select id="in-sp-payer" class="f-input">${MEMBERS.map(m=>`<option ${m===currentUser?'selected':''}>${m}</option>`).join('')}</select><div class="flex items-center justify-between py-2"><span class="text-xs font-black">公費分帳？</span><input type="checkbox" id="is-split" checked class="w-5 h-5 accent-emerald-600"></div><div id="part-ui" class="flex flex-wrap gap-2 mt-2">${MEMBERS.map(m => `<div class="member-chip selected" data-m="${m}">${m}</div>`).join('')}</div>`;
                 const box = document.getElementById('is-split'); const pUI = document.getElementById('part-ui');
                 box.onchange = () => pUI.style.display = box.checked ? 'flex' : 'none';
                 pUI.querySelectorAll('.member-chip').forEach(c => c.onclick = () => c.classList.toggle('selected'));
@@ -273,7 +271,7 @@
                 container.innerHTML = getInp('in-check', '物品名稱');
                 if(editIndex !== -1) document.getElementById('in-check').value = privateChecklist[editIndex].text;
             } else if (currentPage === 'notes') {
-                container.innerHTML = getInp('in-nt-t', '標題') + getInp('in-nt-l', '網址');
+                container.innerHTML = getInp('in-nt-t', '攻略標題') + getInp('in-nt-l', '網址 https://...');
                 if(editIndex !== -1) { document.getElementById('in-nt-t').value = notes[editIndex].title; document.getElementById('in-nt-l').value = notes[editIndex].link; }
             }
             document.getElementById('add-modal').classList.add('active');
@@ -313,46 +311,65 @@
             } catch(e) { alert("儲存失敗"); }
         }
 
-        // --- 核心新增：顯示花費總覽 ---
+        // --- 核心更新：智慧財務清算建議 ---
         function showExpenseSummary() {
             const content = document.getElementById('summary-content');
             let total = 0;
-            const payerTotals = {}, memberOwes = {};
-            
-            MEMBERS.forEach(m => { payerTotals[m] = 0; memberOwes[m] = 0; });
+            const netBalance = {}; // 每位成員的最終淨值 (代墊額 - 應付額)
+            MEMBERS.forEach(m => netBalance[m] = 0);
             
             publicSpendings.forEach(s => {
                 total += s.cost;
-                payerTotals[s.payer] += s.cost; // 誰墊了多少
+                netBalance[s.payer] += s.cost;
                 const perCost = Math.round(s.cost / (s.parts.length || 1));
-                s.parts.forEach(m => memberOwes[m] += perCost); // 誰總共該付多少
+                s.parts.forEach(m => netBalance[m] -= perCost);
             });
 
+            // 計算結算建議 (大錢還小錢)
+            const creditors = [], debtors = [];
+            Object.keys(netBalance).forEach(m => {
+                if (netBalance[m] > 1) creditors.push({ name: m, amount: netBalance[m] });
+                else if (netBalance[m] < -1) debtors.push({ name: m, amount: Math.abs(netBalance[m]) });
+            });
+
+            const settlements = [];
+            let cIdx = 0, dIdx = 0;
+            while (cIdx < creditors.length && dIdx < debtors.length) {
+                const pay = Math.min(creditors[cIdx].amount, debtors[dIdx].amount);
+                settlements.push({ from: debtors[dIdx].name, to: creditors[cIdx].name, amount: pay });
+                creditors[cIdx].amount -= pay;
+                debtors[dIdx].amount -= pay;
+                if (creditors[cIdx].amount <= 1) cIdx++;
+                if (debtors[dIdx].amount <= 1) dIdx++;
+            }
+
             content.innerHTML = `
-                <div class="bg-blue-50 p-6 rounded-3xl text-center">
+                <div class="bg-blue-50 p-6 rounded-3xl text-center mb-6">
                     <p class="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-1">旅程公費總支出</p>
                     <p class="text-3xl font-black text-blue-600">¥${total.toLocaleString()}</p>
                 </div>
                 <div>
-                    <h3 class="text-sm font-black text-gray-400 mb-3 uppercase tracking-wider">代墊貢獻榜 (已出的錢)</h3>
-                    <div class="space-y-2">
+                    <h3 class="text-xs font-black text-gray-400 mb-3 uppercase tracking-wider">成員結算淨值 (正=領錢, 負=付錢)</h3>
+                    <div class="grid grid-cols-2 gap-2">
                         ${MEMBERS.map(m => `
-                            <div class="flex justify-between items-center bg-gray-50 p-4 rounded-2xl">
-                                <span class="font-bold text-gray-700">${m}</span>
-                                <span class="font-black text-gray-900">¥${payerTotals[m].toLocaleString()}</span>
+                            <div class="bg-gray-50 p-3 rounded-2xl">
+                                <p class="text-[10px] font-bold text-gray-400">${m}</p>
+                                <p class="text-sm font-black ${netBalance[m] >=0 ? 'text-emerald-600' : 'text-red-400'}">
+                                    ${netBalance[m] > 0 ? '+' : ''}${Math.round(netBalance[m]).toLocaleString()}
+                                </p>
                             </div>
                         `).join('')}
                     </div>
                 </div>
-                <div>
-                    <h3 class="text-sm font-black text-gray-400 mb-3 uppercase tracking-wider">個人應付總計 (總開銷分擔)</h3>
+                <div class="pt-4">
+                    <h3 class="text-xs font-black text-emerald-600 mb-3 uppercase tracking-wider">💡 智慧結算建議 (怎麼還錢最快)</h3>
                     <div class="space-y-2">
-                        ${MEMBERS.map(m => `
-                            <div class="flex justify-between items-center bg-white border border-gray-100 p-4 rounded-2xl shadow-sm">
-                                <span class="font-bold text-gray-700">${m}</span>
-                                <span class="font-black text-emerald-600">¥${memberOwes[m].toLocaleString()}</span>
+                        ${settlements.map(s => `
+                            <div class="flex items-center justify-between bg-emerald-50/50 border border-emerald-100 p-4 rounded-2xl">
+                                <span class="font-bold text-gray-700 text-sm">${s.from} <span class="text-gray-300 mx-2">👉</span> ${s.to}</span>
+                                <span class="font-black text-emerald-600 text-sm">¥${Math.round(s.amount).toLocaleString()}</span>
                             </div>
-                        `).join('')}
+                        `).join('') || '<p class="text-center text-gray-300 py-4 italic">目前帳目平衡，無須找零</p>'}
                     </div>
                 </div>
             `;
@@ -371,22 +388,24 @@
         document.getElementById('modal-save-btn').onclick = handleSave;
         document.getElementById('close-summary-btn').onclick = () => document.getElementById('summary-modal').classList.remove('active');
         
-        // 導航邏輯
         document.getElementById('nav-itinerary').onclick = () => { currentPage = 'itinerary'; syncAndRender(); };
         document.getElementById('nav-checklist').onclick = () => { currentPage = 'checklist'; syncAndRender(); };
         document.getElementById('nav-budget').onclick = () => { currentPage = 'budget'; syncAndRender(); };
         document.getElementById('nav-notes').onclick = () => { currentPage = 'notes'; syncAndRender(); };
         
-        // 總覽按鈕點擊
+        // 修正：跳轉 Google Maps 不留白
         document.getElementById('route-map-btn').onclick = () => {
             if (currentPage === 'itinerary') {
                 const activities = tripData[currentDay-1]?.activities || [];
                 const locs = activities.map(a => a.address || a.title).filter(l => l && l.length > 0);
-                if(locs.length < 2) return alert("請至少新增兩個行程");
-                const origin = encodeURIComponent(locs[0]), dest = encodeURIComponent(locs[locs.length-1]);
-                let url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}&travelmode=transit`;
-                if(locs.length > 2) url += `&waypoints=${locs.slice(1,-1).map(l=>encodeURIComponent(l)).join('|')}`;
-                window.open(url, '_blank');
+                if(locs.length < 1) return alert("請先新增行程");
+                let url = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(locs[0])}`;
+                if(locs.length > 1) {
+                    url += `&destination=${encodeURIComponent(locs[locs.length-1])}`;
+                    if(locs.length > 2) url += `&waypoints=${locs.slice(1,-1).map(l=>encodeURIComponent(l)).join('|')}`;
+                }
+                url += `&travelmode=transit`;
+                location.href = url; // 關鍵：改用 location.href 避免空白分頁
             } else if (currentPage === 'budget') {
                 showExpenseSummary();
             }
