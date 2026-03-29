@@ -10,7 +10,7 @@
         html, body { font-family: 'Noto Sans TC', sans-serif; background-color: #F8FAFC; height: 100%; margin: 0; padding: 0; display: flex; flex-direction: column; overflow: hidden; }
         header { padding-top: env(safe-area-inset-top); background: white; z-index: 50; flex-shrink: 0; border-bottom: 1px solid #F1F5F9; }
         main { flex-grow: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-        footer { padding-bottom: env(safe-area-inset-bottom); height: calc(70px + env(safe-area-inset-bottom)); background: white; z-index: 50; flex-shrink: 0; border-top: 1px solid #F1F5F9; box-shadow: 0 -2px 10px rgba(0,0,0,0.03); }
+        footer { padding-bottom: env(safe-area-inset-bottom); height: calc(65px + env(safe-area-inset-bottom)); background: white; z-index: 50; flex-shrink: 0; border-top: 1px solid #F1F5F9; box-shadow: 0 -2px 10px rgba(0,0,0,0.03); }
         button, .member-chip, .day-tab-trigger { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
         .active-tab { background-color: #059669 !important; color: white !important; }
         .active-nav { color: #059669 !important; font-weight: 900; }
@@ -32,7 +32,7 @@
         .f-input { background-color: #f3f4f6; border: none; border-radius: 1rem; padding: 0.8rem 1rem; font-size: 16px; font-weight: 700; width: 100%; margin-bottom: 8px; }
         .member-chip { border: 2px solid #e5e7eb; border-radius: 12px; padding: 6px 12px; font-size: 11px; font-weight: 800; cursor: pointer; }
         .member-chip.selected { background-color: #059669; color: white; border-color: #059669; }
-        .pay-avatar { width: 28px; height: 28px; border-radius: 8px; font-size: 12px; font-weight: 900; display: flex; align-items: center; justify-content: center; transition: all 0.3s; }
+        .pay-avatar { width: 28px; height: 28px; border-radius: 8px; font-size: 12px; font-weight: 900; display: flex; align-items: center; justify-content: center; }
         .paid { background-color: #10B981; color: white; transform: scale(1.1); box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4); }
         .unpaid { background-color: #F3F4F6; color: #9CA3AF; border: 1px solid #E5E7EB; }
         .settled { opacity: 0.5; filter: grayscale(0.5); }
@@ -114,10 +114,13 @@
         
         let currentUser = localStorage.getItem('BH_User_v5');
         let currentDay = 1, currentPage = 'itinerary', editIndex = -1, editItemType = null;
-        let tripData = DATES.map((d, i) => ({ day: i+1, date: d, activities: [] }));
+        let tripData = DATES.map((d, i) => ({ day: i+1, activities: [] }));
         let notes = [], publicSpendings = [];
         let privateChecklist = JSON.parse(localStorage.getItem('BH_Check_v5')) || [];
         let privateSpendings = JSON.parse(localStorage.getItem('BH_Spend_v5')) || [];
+
+        // 拼接網址的保險方法
+        const getMapBase = () => "https:" + "//" + "www" + ".google" + ".com" + "/maps/dir/?api=1";
 
         const syncAndRender = () => {
             if (!currentUser) { showUserOverlay(); return; }
@@ -152,8 +155,6 @@
             if(t==='publicSpend') fbSet(ref(db, 'publicSpend'), publicSpendings.length === 0 ? false : publicSpendings);
         };
 
-        const formatTime = (v) => { let d = v.replace(/\D/g, '').padStart(4, '0'); return d.substring(0,2) + ":" + d.substring(2,4); };
-
         function renderDayTabs() {
             const nav = document.getElementById('day-tabs-nav');
             nav.innerHTML = DATES.map((d, i) => `<button class="day-tab-trigger flex-shrink-0 px-4 py-2 rounded-xl text-[11px] font-black flex flex-col items-center ${currentDay === (i+1) ? 'active-tab' : 'bg-gray-100 text-gray-400'}" data-d="${i+1}"><span>Day ${i+1}</span><span class="text-[8px] opacity-70">${d}</span></button>`).join('');
@@ -163,7 +164,9 @@
         function renderItinerary() {
             const list = document.getElementById('itinerary-list');
             const dayActs = tripData[currentDay-1]?.activities || [];
-            list.innerHTML = dayActs.map((a, i) => `
+            list.innerHTML = dayActs.map((a, i) => {
+                const mapUrl = getMapBase() + `&destination=${encodeURIComponent(a.address || a.title)}&travelmode=transit`;
+                return `
                 <div class="flex items-start space-x-4">
                     <div class="flex flex-col items-center mt-1">
                         <div class="w-10 h-10 rounded-full border-4 border-white shadow-md flex items-center justify-center text-white timeline-dot-${a.type}"><span class="text-[10px] font-black leading-none mb-0.5">${i+1}</span><span class="text-xs">${ICONS[a.type] || "📍"}</span></div>
@@ -175,10 +178,10 @@
                         <span class="text-[9px] px-2 py-0.5 rounded-full font-black type-tag-${a.type} mt-1 inline-block uppercase italic">${a.type}</span>
                         ${a.note ? `<div class="hashtag-red"># ${a.note}</div>` : ''}
                         <div class="flex justify-between items-center mt-4 pt-3 border-t border-gray-50"><span class="text-[10px] font-black text-gray-400">預算 ¥${(a.cost || 0).toLocaleString()}</span>
-                            <a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(a.address || a.title)}&travelmode=transit" target="_blank" class="px-3 py-1 bg-emerald-50 rounded-xl text-emerald-600 text-[10px] font-black italic">導航</a>
+                            <a href="${mapUrl}" target="_blank" class="px-3 py-1 bg-emerald-50 rounded-xl text-emerald-600 text-[10px] font-black italic">導航</a>
                         </div>
                     </div>
-                </div>`).join('') || `<p class="text-center text-gray-300 py-10 italic uppercase font-black">Day ${currentDay} No Events</p>`;
+                </div>`}).join('') || `<p class="text-center text-gray-300 py-10 italic uppercase font-black">Day ${currentDay} No Events</p>`;
             list.querySelectorAll('.edit-it-btn').forEach(b => b.onclick = () => { editIndex = parseInt(b.dataset.idx); editItemType='itinerary'; openModal(); });
             list.querySelectorAll('.del-it-btn').forEach(b => b.onclick = () => { if(confirm("確定刪除？")) { tripData[currentDay-1].activities.splice(parseInt(b.dataset.idx), 1); saveToCloud('itinerary'); } });
         }
@@ -244,7 +247,7 @@
                 container.innerHTML = `<div class="grid grid-cols-2 gap-2"><input id="in-time" type="text" placeholder="0900" class="f-input"><select id="in-type" class="f-input"><option>景點</option><option>美食</option><option>購物</option><option>移動</option></select></div><input id="in-title" type="text" placeholder="名稱" class="f-input"><input id="in-note" type="text" placeholder="標籤" class="f-input"><input id="in-address" type="text" placeholder="地址" class="f-input"><input id="in-cost" type="number" placeholder="費用" class="f-input">`;
                 if(editIndex !== -1) { const a = tripData[currentDay-1].activities[editIndex]; document.getElementById('in-time').value = a.time.replace(':',''); document.getElementById('in-title').value = a.title; document.getElementById('in-type').value = a.type; document.getElementById('in-note').value = a.note || ""; document.getElementById('in-address').value = a.address || ""; document.getElementById('in-cost').value = a.cost || 0; }
             } else if (currentPage === 'budget') {
-                container.innerHTML = `<input id="in-sp-title" type="text" placeholder="支出內容" class="f-input"><input id="in-sp-cost" type="number" placeholder="金額" class="f-input"><p class="text-[10px] font-black text-gray-400 mt-2 uppercase">支付人</p><select id="in-sp-payer" class="f-input">${MEMBERS.map(m=>`<option ${m===currentUser?'selected':''}>${m}</option>`).join('')}</select><div class="flex items-center justify-between py-2"><span class="text-xs font-black">分帳？</span><input type="checkbox" id="is-split" checked class="w-5 h-5 accent-emerald-600"></div><div id="part-ui" class="flex flex-wrap gap-2 mt-2">${MEMBERS.map(m => `<div class="member-chip selected" data-m="${m}">${m}</div>`).join('')}</div>`;
+                container.innerHTML = `<input id="in-sp-title" type="text" placeholder="內容" class="f-input"><input id="in-sp-cost" type="number" placeholder="金額" class="f-input"><p class="text-[10px] font-black text-gray-400 mt-2 uppercase">支付人</p><select id="in-sp-payer" class="f-input">${MEMBERS.map(m=>`<option ${m===currentUser?'selected':''}>${m}</option>`).join('')}</select><div class="flex items-center justify-between py-2"><span class="text-xs font-black">分帳？</span><input type="checkbox" id="is-split" checked class="w-5 h-5 accent-emerald-600"></div><div id="part-ui" class="flex flex-wrap gap-2 mt-2">${MEMBERS.map(m => `<div class="member-chip selected" data-m="${m}">${m}</div>`).join('')}</div>`;
                 const box = document.getElementById('is-split'); const pUI = document.getElementById('part-ui');
                 box.onchange = () => pUI.style.display = box.checked ? 'flex' : 'none';
                 pUI.querySelectorAll('.member-chip').forEach(c => c.onclick = () => c.classList.toggle('selected'));
@@ -308,19 +311,15 @@
         document.getElementById('nav-notes').onclick = () => { currentPage = 'notes'; syncAndRender(); };
         document.getElementById('header-title-btn').onclick = () => { if(confirm("換身分？")) { localStorage.clear(); location.reload(); } };
         
-        // 核心修正：總覽地圖邏輯 (修復 404 問題)
         document.getElementById('route-map-btn').onclick = () => {
             const activities = tripData[currentDay-1]?.activities || [];
             const locs = activities.map(a => a.address || a.title).filter(l => l);
-            if(locs.length < 1) return alert("請先新增行程");
+            if(locs.length < 2) return alert("請至少新增兩個景點");
             
             const origin = encodeURIComponent(locs[0]);
-            if(locs.length === 1) {
-                window.open(`https://www.google.com/maps/dir/?api=1&destination=${origin}&travelmode=transit`, '_blank');
-                return;
-            }
             const destination = encodeURIComponent(locs[locs.length - 1]);
-            let url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=transit`;
+            let url = getMapBase() + `&origin=${origin}&destination=${destination}&travelmode=transit`;
+            
             if(locs.length > 2) {
                 const waypoints = locs.slice(1, -1).map(l => encodeURIComponent(l)).join('|');
                 url += `&waypoints=${waypoints}`;
