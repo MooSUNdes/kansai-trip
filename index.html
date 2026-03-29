@@ -103,7 +103,7 @@
     <div id="summary-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm items-center justify-center p-6 hidden">
         <div class="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl max-h-[85vh] overflow-y-auto relative">
             <button id="close-summary-btn" class="absolute top-6 right-6 text-gray-300 font-bold text-xl">✕</button>
-            <h2 class="text-xl font-black mb-6 text-emerald-600 italic">剩餘未清帳務 📊</h2>
+            <h2 class="text-xl font-black mb-6 text-blue-600 italic">目前待結清帳務 📊</h2>
             <div id="summary-content" class="space-y-6 pb-4"></div>
         </div>
     </div>
@@ -198,17 +198,12 @@
             const list = document.getElementById('budget-list');
             const dayPub = publicSpendings.filter(s => s.day === currentDay);
             const dayPriv = privateSpendings.filter(s => s.day === currentDay);
-            
-            // 計算個人當日總合 (含公費應付)
             let todaySum = 0;
             dayPub.filter(x => x.parts?.includes(currentUser)).forEach(x => todaySum += Math.round(x.cost / (x.parts.length || 1)));
             dayPriv.forEach(x => todaySum += (x.cost || 0));
-            
-            // 計算旅程累計
             let totalSum = 0;
             publicSpendings.filter(x => x.parts?.includes(currentUser)).forEach(x => totalSum += Math.round(x.cost / (x.parts.length || 1)));
             privateSpendings.forEach(x => totalSum += (x.cost || 0));
-
             document.getElementById('disp-today-cost').innerText = `¥${todaySum.toLocaleString()}`;
             document.getElementById('disp-total-cost').innerText = `¥${totalSum.toLocaleString()}`;
 
@@ -270,7 +265,7 @@
                 container.innerHTML = getInp('in-check', '物品名稱');
                 if(editIndex !== -1) document.getElementById('in-check').value = privateChecklist[editIndex].text;
             } else if (currentPage === 'notes') {
-                container.innerHTML = getInp('in-nt-t', '攻略標題') + getInp('in-nt-l', '網址 https://...');
+                container.innerHTML = getInp('in-nt-t', '攻略標題') + getInp('in-nt-l', '網址');
                 if(editIndex !== -1) { document.getElementById('in-nt-t').value = notes[editIndex].title; document.getElementById('in-nt-l').value = notes[editIndex].link; }
             }
             document.getElementById('add-modal').classList.add('active');
@@ -310,7 +305,7 @@
             } catch(e) { alert("儲存失敗"); }
         }
 
-        // --- 核心升級：智慧清算 (扣除已打勾項目) ---
+        // --- 核心優化：智慧清算 (僅計算未打勾的實際債務) ---
         function showExpenseSummary() {
             const content = document.getElementById('summary-content');
             const netBalance = {}; 
@@ -321,43 +316,43 @@
                 const perCost = Math.round(s.cost / (s.parts.length || 1));
                 
                 s.parts.forEach(m => {
-                    // 關鍵邏輯：如果成員沒在 whoPaid 裡面，才計算這筆債務
+                    // 修正關鍵：如果成員沒在 whoPaid 裡面，代表這筆「欠款」還在，才列入計算
                     if (!whoPaid.includes(m)) {
-                        netBalance[m] -= perCost;      // 該成員欠錢
-                        netBalance[s.payer] += perCost; // 代墊人應收
+                        netBalance[m] -= perCost;      
+                        netBalance[s.payer] += perCost; 
                     }
                 });
             });
 
             const creditors = [], debtors = [];
             Object.keys(netBalance).forEach(m => {
-                if (netBalance[m] > 1) creditors.push({ name: m, amount: netBalance[m] });
-                else if (netBalance[m] < -1) debtors.push({ name: m, amount: Math.abs(netBalance[m]) });
+                if (netBalance[m] > 5) creditors.push({ name: m, amount: netBalance[m] });
+                else if (netBalance[m] < -5) debtors.push({ name: m, amount: Math.abs(netBalance[m]) });
             });
 
             const settlements = [];
-            let cIdx = 0, dIdx = 0;
             const tempCreditors = creditors.map(c => ({...c}));
             const tempDebtors = debtors.map(d => ({...d}));
+            let cIdx = 0, dIdx = 0;
 
             while (cIdx < tempCreditors.length && dIdx < tempDebtors.length) {
                 const pay = Math.min(tempCreditors[cIdx].amount, tempDebtors[dIdx].amount);
                 settlements.push({ from: tempDebtors[dIdx].name, to: tempCreditors[cIdx].name, amount: pay });
                 tempCreditors[cIdx].amount -= pay;
                 tempDebtors[dIdx].amount -= pay;
-                if (tempCreditors[cIdx].amount <= 1) cIdx++;
-                if (tempDebtors[dIdx].amount <= 1) dIdx++;
+                if (tempCreditors[cIdx].amount <= 5) cIdx++;
+                if (tempDebtors[dIdx].amount <= 5) dIdx++;
             }
 
             content.innerHTML = `
                 <div>
-                    <h3 class="text-xs font-black text-gray-400 mb-3 uppercase tracking-wider">目前剩餘欠款 (尚未打勾項)</h3>
+                    <h3 class="text-xs font-black text-gray-400 mb-3 uppercase tracking-wider">目前實質欠款 (排除已打勾項)</h3>
                     <div class="grid grid-cols-2 gap-2 mb-6">
                         ${MEMBERS.map(m => `
                             <div class="bg-gray-50 p-3 rounded-2xl">
                                 <p class="text-[10px] font-bold text-gray-400">${m}</p>
-                                <p class="text-sm font-black ${netBalance[m] >= 0 ? (netBalance[m] < 1 ? 'text-gray-300' : 'text-emerald-600') : 'text-red-400'}">
-                                    ${netBalance[m] > 1 ? '+' : ''}${Math.round(netBalance[m]).toLocaleString()}
+                                <p class="text-sm font-black ${netBalance[m] > 5 ? 'text-emerald-600' : (netBalance[m] < -5 ? 'text-red-400' : 'text-gray-300')}">
+                                    ${netBalance[m] > 5 ? '+' : ''}${Math.round(netBalance[m]).toLocaleString()}
                                 </p>
                             </div>
                         `).join('')}
@@ -367,12 +362,13 @@
                     <h3 class="text-xs font-black text-emerald-600 mb-3 uppercase tracking-wider">💰 建議清帳路徑</h3>
                     <div class="space-y-2">
                         ${settlements.map(s => `
-                            <div class="flex items-center justify-between bg-emerald-50/50 border border-emerald-100 p-4 rounded-2xl">
+                            <div class="flex items-center justify-between bg-emerald-50/50 border border-emerald-100 p-4 rounded-2xl shadow-sm">
                                 <span class="font-bold text-gray-700 text-sm">${s.from} <span class="text-gray-300 mx-1">➜</span> ${s.to}</span>
                                 <span class="font-black text-emerald-600 text-sm">¥${Math.round(s.amount).toLocaleString()}</span>
                             </div>
-                        `).join('') || '<p class="text-center text-gray-300 py-8 italic text-sm">暫無未清帳務，大家都很守信用喔！🌸</p>'}
+                        `).join('') || '<p class="text-center text-gray-300 py-8 italic text-sm">太棒了！目前的帳目已全部結清。🌸</p>'}
                     </div>
+                    <p class="text-[9px] text-gray-400 mt-4 text-center leading-relaxed">※ 結算建議會自動抵銷成員間的債務。<br>只要團員對每筆開銷「打勾」，該筆債務就會從此表消失。</p>
                 </div>
             `;
             document.getElementById('summary-modal').classList.add('active');
