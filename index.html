@@ -331,7 +331,7 @@
         
         document.getElementById('route-map-btn').onclick = () => {
             const activities = tripData[currentDay-1]?.activities || [];
-            const locs = activities.map(a => (a.address || a.title) + " 日本").filter(l => l.trim().length > 3);
+            const locs = activities.map(a => (a.address || a.title)).filter(l => l.trim().length > 3);
             if(locs.length < 2) return alert("請至少新增兩個景點才能生成路線");
             const waypoints = locs.map(l => encodeURIComponent(l)).join('/');
             window.open(getMapBase() + `&origin=${encodeURIComponent(locs[0])}&destination=${encodeURIComponent(locs[locs.length-1])}&waypoints=${locs.slice(1,-1).map(l=>encodeURIComponent(l)).join('|')}&travelmode=transit`, '_blank');
