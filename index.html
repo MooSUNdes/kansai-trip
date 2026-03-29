@@ -174,7 +174,9 @@
                         <h3 class="font-black text-gray-900 pr-12">${a.title}</h3>
                         <span class="text-[9px] px-2 py-0.5 rounded-full font-black type-tag-${a.type} mt-1 inline-block uppercase italic">${a.type}</span>
                         ${a.note ? `<div class="hashtag-red"># ${a.note}</div>` : ''}
-                        <div class="flex justify-between items-center mt-4 pt-3 border-t border-gray-50"><span class="text-[10px] font-black text-gray-400">預算 ¥${(a.cost || 0).toLocaleString()}</span><a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(a.address || a.title)}&travelmode=transit" target="_blank" class="px-3 py-1 bg-emerald-50 rounded-xl text-emerald-600 text-[10px] font-black italic">導航</a></div>
+                        <div class="flex justify-between items-center mt-4 pt-3 border-t border-gray-50"><span class="text-[10px] font-black text-gray-400">預算 ¥${(a.cost || 0).toLocaleString()}</span>
+                            <a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(a.address || a.title)}&travelmode=transit" target="_blank" class="px-3 py-1 bg-emerald-50 rounded-xl text-emerald-600 text-[10px] font-black italic">導航</a>
+                        </div>
                     </div>
                 </div>`).join('') || `<p class="text-center text-gray-300 py-10 italic uppercase font-black">Day ${currentDay} No Events</p>`;
             list.querySelectorAll('.edit-it-btn').forEach(b => b.onclick = () => { editIndex = parseInt(b.dataset.idx); editItemType='itinerary'; openModal(); });
@@ -306,7 +308,7 @@
         document.getElementById('nav-notes').onclick = () => { currentPage = 'notes'; syncAndRender(); };
         document.getElementById('header-title-btn').onclick = () => { if(confirm("換身分？")) { localStorage.clear(); location.reload(); } };
         
-        // 核心修正：總覽地圖邏輯 (修復手機 404 問題)
+        // 核心修正：總覽地圖邏輯 (修復 404 問題)
         document.getElementById('route-map-btn').onclick = () => {
             const activities = tripData[currentDay-1]?.activities || [];
             const locs = activities.map(a => a.address || a.title).filter(l => l);
