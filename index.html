@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>關西櫻花之旅 - 伯鴻穩定版</title>
+    <title>關西櫻花之旅 - 伯鴻終極修正版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
         html, body { font-family: 'Noto Sans TC', sans-serif; background-color: #F8FAFC; height: 100%; margin: 0; padding: 0; display: flex; flex-direction: column; overflow: hidden; }
         header { padding-top: env(safe-area-inset-top); background: white; z-index: 50; flex-shrink: 0; border-bottom: 1px solid #F1F5F9; }
         main { flex-grow: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-        footer { padding-bottom: env(safe-area-inset-bottom); height: calc(65px + env(safe-area-inset-bottom)); background: white; z-index: 50; flex-shrink: 0; border-top: 1px solid #F1F5F9; box-shadow: 0 -2px 10px rgba(0,0,0,0.03); }
+        footer { padding-bottom: env(safe-area-inset-bottom); height: calc(70px + env(safe-area-inset-bottom)); background: white; z-index: 50; flex-shrink: 0; border-top: 1px solid #F1F5F9; box-shadow: 0 -2px 10px rgba(0,0,0,0.03); }
         button, .member-chip, .day-tab-trigger { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
         .active-tab { background-color: #059669 !important; color: white !important; }
         .active-nav { color: #059669 !important; font-weight: 900; }
@@ -119,7 +119,6 @@
         let privateChecklist = JSON.parse(localStorage.getItem('BH_Check_v5')) || [];
         let privateSpendings = JSON.parse(localStorage.getItem('BH_Spend_v5')) || [];
 
-        // 拼接網址的保險方法
         const getMapBase = () => "https:" + "//" + "www" + ".google" + ".com" + "/maps/dir/?api=1";
 
         const syncAndRender = () => {
@@ -155,6 +154,8 @@
             if(t==='publicSpend') fbSet(ref(db, 'publicSpend'), publicSpendings.length === 0 ? false : publicSpendings);
         };
 
+        const formatTime = (v) => { let d = v.replace(/\D/g, '').padStart(4, '0'); return d.substring(0,2) + ":" + d.substring(2,4); };
+
         function renderDayTabs() {
             const nav = document.getElementById('day-tabs-nav');
             nav.innerHTML = DATES.map((d, i) => `<button class="day-tab-trigger flex-shrink-0 px-4 py-2 rounded-xl text-[11px] font-black flex flex-col items-center ${currentDay === (i+1) ? 'active-tab' : 'bg-gray-100 text-gray-400'}" data-d="${i+1}"><span>Day ${i+1}</span><span class="text-[8px] opacity-70">${d}</span></button>`).join('');
@@ -165,7 +166,9 @@
             const list = document.getElementById('itinerary-list');
             const dayActs = tripData[currentDay-1]?.activities || [];
             list.innerHTML = dayActs.map((a, i) => {
-                const mapUrl = getMapBase() + `&destination=${encodeURIComponent(a.address || a.title)}&travelmode=transit`;
+                // 導航精確度：優先抓地址，名稱強制加日本
+                const locQuery = encodeURIComponent((a.address || a.title));
+                const mapUrl = getMapBase() + `&destination=${locQuery}&travelmode=transit`;
                 return `
                 <div class="flex items-start space-x-4">
                     <div class="flex flex-col items-center mt-1">
@@ -177,17 +180,20 @@
                         <h3 class="font-black text-gray-900 pr-12">${a.title}</h3>
                         <span class="text-[9px] px-2 py-0.5 rounded-full font-black type-tag-${a.type} mt-1 inline-block uppercase italic">${a.type}</span>
                         ${a.note ? `<div class="hashtag-red"># ${a.note}</div>` : ''}
-                        <div class="flex justify-between items-center mt-4 pt-3 border-t border-gray-50"><span class="text-[10px] font-black text-gray-400">預算 ¥${(a.cost || 0).toLocaleString()}</span>
-                            <a href="${mapUrl}" target="_blank" class="px-3 py-1 bg-emerald-50 rounded-xl text-emerald-600 text-[10px] font-black italic">導航</a>
+                        <div class="flex justify-between items-center mt-4 pt-3 border-t border-gray-50">
+                            <span class="text-[10px] font-black text-gray-400">預算 ¥${(a.cost || 0).toLocaleString()}</span>
+                            <a href="${mapUrl}" target="_blank" class="px-3 py-1 bg-emerald-50 rounded-xl text-emerald-600 text-[10px] font-black italic">導航 📍</a>
                         </div>
                     </div>
                 </div>`}).join('') || `<p class="text-center text-gray-300 py-10 italic uppercase font-black">Day ${currentDay} No Events</p>`;
+            
             list.querySelectorAll('.edit-it-btn').forEach(b => b.onclick = () => { editIndex = parseInt(b.dataset.idx); editItemType='itinerary'; openModal(); });
             list.querySelectorAll('.del-it-btn').forEach(b => b.onclick = () => { if(confirm("確定刪除？")) { tripData[currentDay-1].activities.splice(parseInt(b.dataset.idx), 1); saveToCloud('itinerary'); } });
         }
 
         function calculateUserCost(d) {
-            let s = 0; publicSpendings.filter(x => x.day === d && x.parts?.includes(currentUser)).forEach(x => s += Math.round(x.cost / (x.parts.length || 1)));
+            let s = 0;
+            publicSpendings.filter(x => x.day === d && x.parts?.includes(currentUser)).forEach(x => s += Math.round(x.cost / (x.parts.length || 1)));
             privateSpendings.filter(x => x.day === d).forEach(x => s += (parseInt(x.cost) || 0));
             return s;
         }
@@ -244,10 +250,10 @@
             const modalTitle = document.getElementById('modal-title-text');
             modalTitle.innerText = editIndex === -1 ? "✨ 新增項目" : "✎ 編輯項目";
             if (currentPage === 'itinerary') {
-                container.innerHTML = `<div class="grid grid-cols-2 gap-2"><input id="in-time" type="text" placeholder="0900" class="f-input"><select id="in-type" class="f-input"><option>景點</option><option>美食</option><option>購物</option><option>移動</option></select></div><input id="in-title" type="text" placeholder="名稱" class="f-input"><input id="in-note" type="text" placeholder="標籤" class="f-input"><input id="in-address" type="text" placeholder="地址" class="f-input"><input id="in-cost" type="number" placeholder="費用" class="f-input">`;
+                container.innerHTML = `<div class="grid grid-cols-2 gap-2"><input id="in-time" type="text" placeholder="0900" class="f-input"><select id="in-type" class="f-input"><option>景點</option><option>美食</option><option>購物</option><option>移動</option></select></div><input id="in-title" type="text" placeholder="名稱" class="f-input"><input id="in-note" type="text" placeholder="標籤" class="f-input"><input id="in-address" type="text" placeholder="詳細地址" class="f-input"><input id="in-cost" type="number" placeholder="預算" class="f-input">`;
                 if(editIndex !== -1) { const a = tripData[currentDay-1].activities[editIndex]; document.getElementById('in-time').value = a.time.replace(':',''); document.getElementById('in-title').value = a.title; document.getElementById('in-type').value = a.type; document.getElementById('in-note').value = a.note || ""; document.getElementById('in-address').value = a.address || ""; document.getElementById('in-cost').value = a.cost || 0; }
             } else if (currentPage === 'budget') {
-                container.innerHTML = `<input id="in-sp-title" type="text" placeholder="內容" class="f-input"><input id="in-sp-cost" type="number" placeholder="金額" class="f-input"><p class="text-[10px] font-black text-gray-400 mt-2 uppercase">支付人</p><select id="in-sp-payer" class="f-input">${MEMBERS.map(m=>`<option ${m===currentUser?'selected':''}>${m}</option>`).join('')}</select><div class="flex items-center justify-between py-2"><span class="text-xs font-black">分帳？</span><input type="checkbox" id="is-split" checked class="w-5 h-5 accent-emerald-600"></div><div id="part-ui" class="flex flex-wrap gap-2 mt-2">${MEMBERS.map(m => `<div class="member-chip selected" data-m="${m}">${m}</div>`).join('')}</div>`;
+                container.innerHTML = `<input id="in-sp-title" type="text" placeholder="支出內容" class="f-input"><input id="in-sp-cost" type="number" placeholder="金額" class="f-input"><p class="text-[10px] font-black text-gray-400 mt-2 uppercase">支付人</p><select id="in-sp-payer" class="f-input">${MEMBERS.map(m=>`<option ${m===currentUser?'selected':''}>${m}</option>`).join('')}</select><div class="flex items-center justify-between py-2"><span class="text-xs font-black">分帳？</span><input type="checkbox" id="is-split" checked class="w-5 h-5 accent-emerald-600"></div><div id="part-ui" class="flex flex-wrap gap-2 mt-2">${MEMBERS.map(m => `<div class="member-chip selected" data-m="${m}">${m}</div>`).join('')}</div>`;
                 const box = document.getElementById('is-split'); const pUI = document.getElementById('part-ui');
                 box.onchange = () => pUI.style.display = box.checked ? 'flex' : 'none';
                 pUI.querySelectorAll('.member-chip').forEach(c => c.onclick = () => c.classList.toggle('selected'));
@@ -267,13 +273,22 @@
                 const modal = document.getElementById('add-modal');
                 if (currentPage === 'itinerary') {
                     const title = document.getElementById('in-title')?.value; if (!title) return alert("請輸入名稱");
-                    const entry = { title, time: formatTime(document.getElementById('in-time')?.value || "0000"), type: document.getElementById('in-type').value, note: document.getElementById('in-note').value, address: document.getElementById('in-address').value, cost: parseInt(document.getElementById('in-cost').value || 0) };
+                    const entry = { 
+                        title, 
+                        time: formatTime(document.getElementById('in-time')?.value || "0000"), 
+                        type: document.getElementById('in-type')?.value || "景點", 
+                        note: document.getElementById('in-note')?.value || "", 
+                        address: document.getElementById('in-address')?.value || "", 
+                        cost: parseInt(document.getElementById('in-cost')?.value) || 0 
+                    };
                     if (!tripData[currentDay-1].activities) tripData[currentDay-1].activities = [];
                     if (editIndex === -1) tripData[currentDay-1].activities.push(entry); else tripData[currentDay-1].activities[editIndex] = entry;
                     tripData[currentDay-1].activities.sort((a,b) => a.time.localeCompare(b.time)); saveToCloud('itinerary');
                 } else if (currentPage === 'budget') {
-                    const title = document.getElementById('in-sp-title')?.value || "支出"; const cost = parseInt(document.getElementById('in-sp-cost')?.value || 0);
-                    const isSplit = document.getElementById('is-split')?.checked; const payer = document.getElementById('in-sp-payer')?.value;
+                    const title = document.getElementById('in-sp-title')?.value || "支出"; 
+                    const cost = parseInt(document.getElementById('in-sp-cost')?.value) || 0;
+                    const isSplit = document.getElementById('is-split')?.checked; 
+                    const payer = document.getElementById('in-sp-payer')?.value || currentUser;
                     if (isSplit) {
                         const parts = []; document.querySelectorAll('.member-chip.selected').forEach(c => parts.push(c.dataset.m));
                         const entry = { day: currentDay, title, cost, payer, parts, whoPaid: [payer], isSplit: true };
@@ -289,10 +304,13 @@
                     if (editIndex === -1) privateChecklist.push({text: val, done: false}); else privateChecklist[editIndex].text = val;
                     localStorage.setItem('BH_Check_v5', JSON.stringify(privateChecklist)); syncAndRender();
                 } else if (currentPage === 'notes') {
-                    const t = document.getElementById('in-nt-t')?.value; if(t) { const entry = {title: t, link: document.getElementById('in-nt-l').value}; if (editIndex === -1) notes.push(entry); else notes[editIndex] = entry; saveToCloud('notes'); }
+                    const t = document.getElementById('in-nt-t')?.value; if(t) { 
+                        const entry = {title: t, link: document.getElementById('in-nt-l')?.value || ""}; 
+                        if (editIndex === -1) notes.push(entry); else notes[editIndex] = entry; saveToCloud('notes'); 
+                    }
                 }
                 modal.classList.remove('active'); modal.classList.add('hidden'); editIndex = -1; editItemType = null;
-            } catch(e) { alert("儲存失敗"); }
+            } catch(e) { alert("儲存失敗，請檢查輸入內容是否正確"); }
         }
 
         function showUserOverlay() {
@@ -313,18 +331,10 @@
         
         document.getElementById('route-map-btn').onclick = () => {
             const activities = tripData[currentDay-1]?.activities || [];
-            const locs = activities.map(a => a.address || a.title).filter(l => l);
-            if(locs.length < 2) return alert("請至少新增兩個景點");
-            
-            const origin = encodeURIComponent(locs[0]);
-            const destination = encodeURIComponent(locs[locs.length - 1]);
-            let url = getMapBase() + `&origin=${origin}&destination=${destination}&travelmode=transit`;
-            
-            if(locs.length > 2) {
-                const waypoints = locs.slice(1, -1).map(l => encodeURIComponent(l)).join('|');
-                url += `&waypoints=${waypoints}`;
-            }
-            window.open(url, '_blank');
+            const locs = activities.map(a => (a.address || a.title) + " 日本").filter(l => l.trim().length > 3);
+            if(locs.length < 2) return alert("請至少新增兩個景點才能生成路線");
+            const waypoints = locs.map(l => encodeURIComponent(l)).join('/');
+            window.open(getMapBase() + `&origin=${encodeURIComponent(locs[0])}&destination=${encodeURIComponent(locs[locs.length-1])}&waypoints=${locs.slice(1,-1).map(l=>encodeURIComponent(l)).join('|')}&travelmode=transit`, '_blank');
         };
 
         syncAndRender();
