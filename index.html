@@ -306,16 +306,19 @@
         document.getElementById('nav-notes').onclick = () => { currentPage = 'notes'; syncAndRender(); };
         document.getElementById('header-title-btn').onclick = () => { if(confirm("換身分？")) { localStorage.clear(); location.reload(); } };
         
-        // 核心修正：總覽地圖邏輯
+        // 核心修正：總覽地圖邏輯 (修復手機 404 問題)
         document.getElementById('route-map-btn').onclick = () => {
             const activities = tripData[currentDay-1]?.activities || [];
             const locs = activities.map(a => a.address || a.title).filter(l => l);
-            if(locs.length < 2) return alert("請至少新增兩個地點才能生成路線");
-
+            if(locs.length < 1) return alert("請先新增行程");
+            
             const origin = encodeURIComponent(locs[0]);
+            if(locs.length === 1) {
+                window.open(`https://www.google.com/maps/dir/?api=1&destination=${origin}&travelmode=transit`, '_blank');
+                return;
+            }
             const destination = encodeURIComponent(locs[locs.length - 1]);
             let url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=transit`;
-
             if(locs.length > 2) {
                 const waypoints = locs.slice(1, -1).map(l => encodeURIComponent(l)).join('|');
                 url += `&waypoints=${waypoints}`;
