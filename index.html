@@ -3,12 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title> 關西之旅</title>
+    
+    <title>🌸 關西櫻花之旅</title>
+    
     <link rel="apple-touch-icon" href="icon.png">
     <link rel="icon" type="image/png" href="icon.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="關西櫻花">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
@@ -202,7 +205,7 @@
 
         function renderDayTabs() {
             const nav = document.getElementById('day-tabs-nav');
-            nav.innerHTML = DATES.map((d, i) => `<button class="day-tab-trigger flex-shrink-0 px-4 py-2 rounded-xl text-[11px] font-black ${currentDay === (i+1) ? 'active-tab' : 'bg-gray-100'}" data-d="${i+1}">${d}</button>`).join('');
+            nav.innerHTML = DATES.map((d, i) => `<button class="day-tab-trigger flex-shrink-0 px-4 py-2 rounded-xl text-[11px] font-black flex flex-col items-center ${currentDay === (i+1) ? 'active-tab' : 'bg-gray-100 text-gray-400'}" data-d="${i+1}"><span>Day ${i+1}</span><span class="text-[8px] opacity-70">${d}</span></button>`).join('');
             nav.querySelectorAll('.day-tab-trigger').forEach(btn => { btn.onclick = () => { currentDay = parseInt(btn.getAttribute('data-d')); syncAndRender(); }; });
         }
 
@@ -211,7 +214,6 @@
             const dayActs = tripData[currentDay-1]?.activities || [];
             list.innerHTML = dayActs.map((a, i) => {
                 const q = encodeURIComponent(a.address || a.title);
-                // 導航連結修復：徹底拆解網址，防止任何系統自動干擾
                 const navUrl = "https" + "://" + "www.google.com" + "/maps/dir/?api=1&destination=" + q + "&travelmode=transit";
                 return `
                 <div class="flex items-start space-x-4">
@@ -239,25 +241,36 @@
 
         function renderBudget() {
             const list = document.getElementById('budget-list');
-            const dayPub = publicSpendings.filter(s => s.day === currentDay);
+            
+            // 核心變更：在此過濾出「只與當前使用者有關」的公費支出
+            const visiblePub = publicSpendings.filter(s => s.payer === currentUser || (s.parts && s.parts.includes(currentUser)));
+            
+            const dayPub = visiblePub.filter(s => s.day === currentDay);
             const dayPriv = privateSpendings.filter(s => s.day === currentDay);
+            
             let todaySum = 0;
-            publicSpendings.filter(x => x.day === currentDay && x.parts?.includes(currentUser)).forEach(x => todaySum += Math.round(x.cost / (x.parts.length || 1)));
-            privateSpendings.filter(x => x.day === currentDay).forEach(x => todaySum += (x.cost || 0));
+            visiblePub.filter(x => x.day === currentDay && x.parts?.includes(currentUser)).forEach(x => todaySum += Math.round(x.cost / (x.parts.length || 1)));
+            dayPriv.forEach(x => todaySum += (x.cost || 0));
+            
             let totalSum = 0;
-            publicSpendings.filter(x => x.parts?.includes(currentUser)).forEach(x => totalSum += Math.round(x.cost / (x.parts.length || 1)));
+            visiblePub.filter(x => x.parts?.includes(currentUser)).forEach(x => totalSum += Math.round(x.cost / (x.parts.length || 1)));
             privateSpendings.forEach(x => totalSum += (x.cost || 0));
+            
             document.getElementById('disp-today-cost').innerText = `¥${todaySum.toLocaleString()}`;
             document.getElementById('disp-total-cost').innerText = `¥${totalSum.toLocaleString()}`;
 
             list.innerHTML = [
                 ...dayPub.map(s => {
-                    const realIdx = publicSpendings.indexOf(s);
+                    const realIdx = publicSpendings.indexOf(s); // 保留真實索引以利儲存
                     const whoPaid = s.whoPaid || [];
                     const perCost = Math.round(s.cost / (s.parts.length || 1));
+                    const isSettled = s.parts.length > 0 && s.parts.every(p => whoPaid.includes(p));
+                    const isIPaid = whoPaid.includes(currentUser);
+                    const disableCheck = !s.parts.includes(currentUser) || s.payer === currentUser;
+
                     return `
-                    <div class="bg-blue-50/50 p-5 rounded-3xl border-2 border-blue-100 relative ${whoPaid.length === s.parts.length ? 'settled' : ''} text-left">
-                        <div class="flex items-center justify-between mb-4"><div class="flex items-center space-x-3"><input type="checkbox" class="sync-check w-7 h-7 accent-emerald-600" ${whoPaid.includes(currentUser) ? 'checked' : ''} ${s.payer === currentUser ? 'disabled' : ''} data-id="${realIdx}"><h4 class="font-black text-gray-800 text-lg">${s.title} <span class="text-blue-600">¥${s.cost.toLocaleString()}</span></h4></div><div class="flex space-x-2"><button class="edit-sp-btn text-blue-400 font-bold" data-idx="${realIdx}" data-type="pub">✎</button><button class="del-sp-btn text-red-300 font-bold" data-idx="${realIdx}" data-type="pub">✕</button></div></div>
+                    <div class="bg-blue-50/50 p-5 rounded-3xl border-2 border-blue-100 relative ${isSettled ? 'settled' : ''} text-left">
+                        <div class="flex items-center justify-between mb-4"><div class="flex items-center space-x-3"><input type="checkbox" class="sync-check w-7 h-7 accent-emerald-600" ${isIPaid ? 'checked' : ''} ${disableCheck ? 'disabled' : ''} data-id="${realIdx}"><h4 class="font-black text-gray-800 text-lg">${s.title} <span class="text-blue-600">¥${s.cost.toLocaleString()}</span></h4></div><div class="flex space-x-2"><button class="edit-sp-btn text-blue-400 font-bold" data-idx="${realIdx}" data-type="pub">✎</button><button class="del-sp-btn text-red-300 font-bold" data-idx="${realIdx}" data-type="pub">✕</button></div></div>
                         <div class="flex justify-between items-center mt-3 pt-3 border-t border-blue-100/50">
                             <p class="text-[10px] font-bold text-blue-400 uppercase italic">由 ${s.payer} 代墊 | 應付: <span class="text-emerald-600 font-black">¥${perCost.toLocaleString()}</span></p>
                             <div class="flex space-x-1.5">${s.parts.map(m => `<div class="pay-avatar ${whoPaid.includes(m) ? 'paid' : 'unpaid'} border-2 border-white shadow-sm">${whoPaid.includes(m) ? '✓' : m.substring(0,1)}</div>`).join('')}</div>
@@ -339,7 +352,12 @@
                     const payer = getVal('in-sp-payer');
                     if (isSplit) {
                         const parts = []; document.querySelectorAll('.member-chip.selected').forEach(c => parts.push(c.dataset.m));
-                        const entry = { day: currentDay, title, cost, payer, parts, whoPaid: [payer], isSplit: true };
+                        let existingWhoPaid = parts.includes(payer) ? [payer] : [];
+                        if (editIndex !== -1 && publicSpendings[editIndex] && publicSpendings[editIndex].whoPaid) {
+                            existingWhoPaid = publicSpendings[editIndex].whoPaid.filter(u => parts.includes(u));
+                            if (parts.includes(payer) && !existingWhoPaid.includes(payer)) existingWhoPaid.push(payer);
+                        }
+                        const entry = { day: currentDay, title, cost, payer, parts, whoPaid: existingWhoPaid, isSplit: true };
                         if (editIndex === -1) publicSpendings.push(entry); else publicSpendings[editIndex] = entry;
                         saveToCloud('publicSpend');
                     } else {
@@ -361,13 +379,35 @@
         function showExpenseSummary() {
             const content = document.getElementById('summary-content');
             const netBalance = {}; MEMBERS.forEach(m => netBalance[m] = 0);
-            publicSpendings.forEach(s => { const whoPaid = s.whoPaid || []; const perCost = Math.round(s.cost / (s.parts.length || 1)); s.parts.forEach(m => { if (!whoPaid.includes(m)) { netBalance[m] -= perCost; netBalance[s.payer] += perCost; } }); });
+            
+            // 核心變更：總覽結算現在只分析「與當前使用者有關」的開銷
+            const visiblePub = publicSpendings.filter(s => s.payer === currentUser || (s.parts && s.parts.includes(currentUser)));
+            
+            visiblePub.forEach(s => { 
+                const whoPaid = s.whoPaid || []; 
+                const perCost = Math.round(s.cost / (s.parts.length || 1)); 
+                s.parts.forEach(m => { 
+                    if (!whoPaid.includes(m)) { 
+                        netBalance[m] -= perCost; 
+                        netBalance[s.payer] += perCost; 
+                    } 
+                }); 
+            });
             const creditors = [], debtors = [];
-            Object.keys(netBalance).forEach(m => { if (netBalance[m] > 0.1) creditors.push({ name: m, amount: netBalance[m] }); else if (netBalance[m] < -0.1) debtors.push({ name: m, amount: Math.abs(netBalance[m]) }); });
+            Object.keys(netBalance).forEach(m => { 
+                if (netBalance[m] > 0.1) creditors.push({ name: m, amount: netBalance[m] }); 
+                else if (netBalance[m] < -0.1) debtors.push({ name: m, amount: Math.abs(netBalance[m]) }); 
+            });
             const settlements = [];
             let ci = 0, di = 0;
-            while (ci < creditors.length && di < debtors.length) { const p = Math.min(creditors[ci].amount, debtors[di].amount); settlements.push({ from: debtors[di].name, to: creditors[ci].name, amount: Math.round(p) }); creditors[ci].amount -= p; debtors[di].amount -= p; if (creditors[ci].amount <= 0.1) ci++; if (debtors[di].amount <= 0.1) di++; }
-            content.innerHTML = `<div><h3 class="text-xs font-black text-gray-400 mb-3 uppercase tracking-wider text-center">目前實質欠款</h3><div class="grid grid-cols-2 gap-2 mb-6">${MEMBERS.map(m => `<div class="bg-gray-50 p-3 rounded-2xl"><p class="text-[10px] font-bold text-gray-400">${m}</p><p class="text-sm font-black ${netBalance[m] > 0.1 ? 'text-emerald-600' : (netBalance[m] < -0.1 ? 'text-red-400' : 'text-gray-300')}">${netBalance[m] > 0.1 ? '+' : ''}${Math.round(netBalance[m]).toLocaleString()}</p></div>`).join('')}</div></div><div class="pt-2"><h3 class="text-xs font-black text-emerald-600 mb-3 uppercase tracking-wider text-center">💰 建議清帳路徑</h3><div class="space-y-2">${settlements.map(s => `<div class="flex items-center justify-between bg-emerald-50/50 border border-emerald-100 p-4 rounded-2xl shadow-sm text-left"><span class="font-bold text-gray-700 text-sm">${s.from} ➜ ${s.to}</span><span class="font-black text-emerald-600 text-sm">¥${s.amount.toLocaleString()}</span></div>`).join('') || '<p class="text-center text-gray-300 py-8 italic text-sm">帳目已全部結清。🌸</p>'}</div></div>`;
+            while (ci < creditors.length && di < debtors.length) { 
+                const p = Math.min(creditors[ci].amount, debtors[di].amount); 
+                if(p > 0) { settlements.push({ from: debtors[di].name, to: creditors[ci].name, amount: Math.round(p) }); }
+                creditors[ci].amount -= p; debtors[di].amount -= p; 
+                if (creditors[ci].amount <= 0.1) ci++; 
+                if (debtors[di].amount <= 0.1) di++; 
+            }
+            content.innerHTML = `<div><h3 class="text-xs font-black text-gray-400 mb-3 uppercase tracking-wider text-center">與我相關的實質欠款</h3><div class="grid grid-cols-2 gap-2 mb-6">${MEMBERS.map(m => `<div class="bg-gray-50 p-3 rounded-2xl"><p class="text-[10px] font-bold text-gray-400">${m}</p><p class="text-sm font-black ${netBalance[m] > 0.1 ? 'text-emerald-600' : (netBalance[m] < -0.1 ? 'text-red-400' : 'text-gray-300')}">${netBalance[m] > 0.1 ? '+' : ''}${Math.round(netBalance[m]).toLocaleString()}</p></div>`).join('')}</div></div><div class="pt-2"><h3 class="text-xs font-black text-emerald-600 mb-3 uppercase tracking-wider text-center">💰 建議還錢路徑</h3><div class="space-y-2">${settlements.map(s => `<div class="flex items-center justify-between bg-emerald-50/50 border border-emerald-100 p-4 rounded-2xl shadow-sm text-left"><span class="font-bold text-gray-700 text-sm">${s.from} ➜ ${s.to}</span><span class="font-black text-emerald-600 text-sm">¥${s.amount.toLocaleString()}</span></div>`).join('') || '<p class="text-center text-gray-300 py-8 italic text-sm">與你相關的帳目已全部結清。🌸</p>'}</div></div>`;
             document.getElementById('summary-modal').classList.add('active');
         }
 
@@ -379,7 +419,7 @@
         document.getElementById('nav-checklist').onclick = () => { currentPage = 'checklist'; syncAndRender(); };
         document.getElementById('nav-budget').onclick = () => { currentPage = 'budget'; syncAndRender(); };
         document.getElementById('nav-notes').onclick = () => { currentPage = 'notes'; syncAndRender(); };
-        document.getElementById('weather-btn').onclick = () => { location.href = "https://tenki.jp/forecast/6/"; };
+        document.getElementById('weather-btn').onclick = () => { location.href = "https" + "://tenki.jp/forecast/6/"; };
         
         document.getElementById('route-map-btn').onclick = () => {
             if (currentPage === 'itinerary') {
