@@ -3,12 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
     <title>🌸 關西櫻花之旅</title>
+    
     <link rel="apple-touch-icon" href="icon.png">
     <link rel="icon" type="image/png" href="icon.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="關西櫻花">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
@@ -75,7 +78,7 @@
         </div>
     </div>
 
-    <main id="main-content">
+    <main>
         <section id="page-itinerary" class="page-content active px-6 py-6"><div id="itinerary-list" class="space-y-8"></div></section>
         <section id="page-checklist" class="page-content px-6 py-8"><h2 class="text-xl font-black mb-6 text-emerald-700">🧳 我的行李 (個人)</h2><div id="checklist-list" class="space-y-3"></div></section>
         <section id="page-budget" class="page-content px-6 py-8">
@@ -105,9 +108,9 @@
     <div id="config-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm items-center justify-center p-6 hidden">
         <div class="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl">
             <h2 class="text-xl font-black mb-6 text-emerald-600 italic text-center">行程時間設定 📅</h2>
-            <p class="text-[10px] font-black text-gray-400 mb-2 uppercase px-1">起始日期</p>
+            <p class="text-[10px] font-black text-gray-400 mb-2 uppercase">起始日期</p>
             <input id="config-start-date" type="date" class="f-input mb-4">
-            <p class="text-[10px] font-black text-gray-400 mb-2 uppercase px-1">結束日期</p>
+            <p class="text-[10px] font-black text-gray-400 mb-2 uppercase">結束日期</p>
             <input id="config-end-date" type="date" class="f-input">
             <div class="flex space-x-3 mt-8">
                 <button id="config-cancel-btn" class="flex-1 py-4 text-sm font-black text-gray-400">取消</button>
@@ -149,9 +152,10 @@
         let tripConfig = JSON.parse(localStorage.getItem('BH_Config_v5')) || { start: "2026-04-13", end: "2026-04-20" };
         let DATES = [];
         let tripData = [];
-        let notes = [], publicSpendings = [], privateChecklist = [], privateSpendings = [];
+        let notes = [], publicSpendings = [];
+        let privateChecklist = JSON.parse(localStorage.getItem('BH_Check_v5')) || [{text:"護照", done:false}, {text:"行動電源", done:false}];
 
-        // --- 安全的日期生成 ---
+        // --- 核心邏輯：日期與天數生成 ---
         function updateDateArray() {
             const start = new Date(tripConfig.start);
             const end = new Date(tripConfig.end);
@@ -161,8 +165,7 @@
                     DATES.push((d.getMonth() + 1) + "/" + d.getDate());
                 }
             }
-            // 補齊 tripData 格子，防止 undefined 錯誤
-            while (tripData.length < DATES.length) tripData.push({ activities: [] });
+            while (tripData.length < DATES.length) { tripData.push({ activities: [] }); }
             if (currentDay > DATES.length) currentDay = 1;
         }
 
@@ -179,9 +182,7 @@
             document.getElementById('route-map-btn').innerText = currentPage === 'itinerary' ? "🗺️" : "📊";
             
             document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
-            const targetPage = document.getElementById(`page-${currentPage}`);
-            if (targetPage) targetPage.classList.add('active');
-
+            document.getElementById(`page-${currentPage}`).classList.add('active');
             document.querySelectorAll('.nav-btn-item').forEach(btn => btn.classList.remove('active-nav'));
             document.getElementById(`nav-${currentPage}`).classList.add('active-nav');
 
@@ -192,10 +193,10 @@
             if (hasDay) renderDayTabs();
         };
 
-        // --- Firebase 監聽 ---
+        // --- Firebase 監聽器 ---
         onValue(ref(db, 'members'), (s) => { if(s.val()) { MEMBERS = s.val(); localStorage.setItem('BH_Members_v5', JSON.stringify(MEMBERS)); } if(!currentUser) renderUserSelector(); else syncAndRender(); });
         onValue(ref(db, 'tripConfig'), (s) => { if(s.val()) { tripConfig = s.val(); localStorage.setItem('BH_Config_v5', JSON.stringify(tripConfig)); syncAndRender(); } });
-        onValue(ref(db, 'tripData'), (s) => { tripData = s.val() || []; syncAndRender(); });
+        onValue(ref(db, 'tripData'), (s) => { if(s.val()) { tripData = s.val(); syncAndRender(); } });
         onValue(ref(db, 'notes'), (s) => { notes = s.val() || []; syncAndRender(); });
         onValue(ref(db, 'publicSpend'), (s) => { publicSpendings = s.val() || []; syncAndRender(); });
 
@@ -207,13 +208,13 @@
             if(t==='members') fbSet(ref(db, 'members'), MEMBERS);
         };
 
-        // --- 防誤觸拖曳 ---
-        let sortableInstance = null;
+        // --- 拖曳排序初始化 ---
+        let sortable = null;
         function initSortable() {
             const el = document.getElementById('day-tabs-nav');
-            if (sortableInstance) sortableInstance.destroy();
-            sortableInstance = Sortable.create(el, {
-                delay: 800, delayOnTouchOnly: true, animation: 250, ghostClass: 'sortable-ghost',
+            if (sortable) sortable.destroy();
+            sortable = Sortable.create(el, {
+                delay: 800, delayOnTouchOnly: true, animation: 300, ghostClass: 'sortable-ghost',
                 onEnd: (evt) => {
                     if (evt.oldIndex === evt.newIndex) return;
                     const movedItem = tripData.splice(evt.oldIndex, 1)[0];
@@ -226,13 +227,12 @@
                     });
                     publicSpendings.forEach(s => { if(s.day === 999) s.day = newD; });
                     currentDay = newD;
-                    saveToCloud('itinerary');
-                    saveToCloud('publicSpend');
+                    saveToCloud('itinerary'); saveToCloud('publicSpend');
                 }
             });
         }
 
-        // --- UI 功能 ---
+        // --- 介面渲染函式 (完整提供，不省略) ---
         function renderUserSelector() {
             const grid = document.getElementById('user-selector-grid');
             grid.innerHTML = MEMBERS.map((m, idx) => `
@@ -244,22 +244,20 @@
             document.getElementById('user-overlay').classList.remove('hidden');
             grid.querySelectorAll('.user-pick').forEach(btn => btn.onclick = () => { localStorage.setItem('BH_User_v5', btn.dataset.user); currentUser = btn.dataset.user; syncAndRender(); });
             grid.querySelectorAll('.edit-mem').forEach(btn => btn.onclick = () => { 
-                const oldName = MEMBERS[btn.dataset.idx];
-                const n = prompt("更改名稱：", oldName); 
-                if(n && n.trim() !== "") { 
-                    const newName = n.trim();
-                    MEMBERS[btn.dataset.idx] = newName; 
+                const oldName = MEMBERS[btn.dataset.idx], n = prompt("更改名稱：", oldName);
+                if(n && n.trim() !== "") {
+                    const newName = n.trim(); MEMBERS[btn.dataset.idx] = newName;
                     if(currentUser === oldName) { currentUser = newName; localStorage.setItem('BH_User_v5', currentUser); }
                     publicSpendings.forEach(s => { if(s.payer === oldName) s.payer = newName; if(s.parts) s.parts = s.parts.map(p => p === oldName ? newName : p); if(s.whoPaid) s.whoPaid = s.whoPaid.map(p => p === oldName ? newName : p); });
                     saveToCloud('publicSpend'); saveToCloud('members'); 
-                } 
+                }
             });
-            grid.querySelectorAll('.del-mem').forEach(btn => btn.onclick = () => { if(confirm(`確定刪除 ${MEMBERS[btn.dataset.idx]} 嗎？`)) { MEMBERS.splice(btn.dataset.idx, 1); if(currentUser === MEMBERS[btn.dataset.idx]) { localStorage.removeItem('BH_User_v5'); currentUser = null; } saveToCloud('members'); } });
+            grid.querySelectorAll('.del-mem').forEach(btn => btn.onclick = () => { if(confirm(`確定刪除 ${MEMBERS[btn.dataset.idx]} 嗎？`)) { MEMBERS.splice(btn.dataset.idx, 1); saveToCloud('members'); } });
         }
 
         function renderDayTabs() {
             const nav = document.getElementById('day-tabs-nav');
-            nav.innerHTML = DATES.map((d, i) => `<button class="day-tab-trigger flex-shrink-0 px-4 py-2 rounded-xl text-[11px] font-black flex flex-col items-center ${currentDay === (i+1) ? 'active-tab' : 'bg-gray-100 text-gray-400'}" data-d="${i+1}"><span>Day ${i+1}</span><span class="text-[8px] opacity-70">${d}</span></button>`).join('');
+            nav.innerHTML = DATES.map((d, i) => `<button class="day-tab-trigger flex-shrink-0 px-4 py-2 rounded-xl text-[11px] font-black flex flex-col items-center ${currentDay === (i+1) ? 'active-tab shadow-md' : 'bg-gray-100 text-gray-400'}" data-d="${i+1}"><span>Day ${i+1}</span><span class="text-[8px] opacity-70">${d}</span></button>`).join('');
             nav.querySelectorAll('.day-tab-trigger').forEach(btn => { btn.onclick = () => { currentDay = parseInt(btn.getAttribute('data-d')); syncAndRender(); }; });
             initSortable();
         }
@@ -267,11 +265,11 @@
         function renderItinerary() {
             const list = document.getElementById('itinerary-list');
             const dayActs = tripData[currentDay-1]?.activities || [];
+            const ICONS_MAP = { "景點": "⛩️", "美食": "🍜", "購物": "🛍️", "移動": "🚃" };
             list.innerHTML = dayActs.map((a, i) => {
                 const q = encodeURIComponent(a.address || a.title);
-                const navUrl = "https" + "://" + "www.google.com" + "/maps/dir/?api=1&destination=" + q + "&travelmode=transit";
-                const ICONS = { "景點": "⛩️", "美食": "🍜", "購物": "🛍️", "移動": "🚃" };
-                return `<div class="flex items-start space-x-4"><div class="flex flex-col items-center mt-1"><div class="w-10 h-10 rounded-full border-4 border-white shadow-md flex flex-col items-center justify-center text-white timeline-dot-${a.type}"><span class="text-[9px] font-black mb-0.5">${i+1}</span><span class="text-[10px]">${ICONS[a.type] || "📍"}</span></div><span class="text-[9px] font-black text-gray-400 mt-2">${a.time}</span></div><div class="flex-grow bg-white rounded-3xl p-5 card-shadow border border-gray-50 relative text-left"><div class="absolute top-4 right-4 flex space-x-2"><button class="edit-it-btn text-emerald-600 text-[10px] font-bold" data-idx="${i}">✎</button><button class="del-it-btn text-red-400 text-[10px] font-bold" data-idx="${i}">✕</button></div><h3 class="font-black text-gray-900 pr-10">${a.title}</h3><span class="text-[9px] px-2 py-0.5 rounded-full font-black type-tag-${a.type} mt-1 inline-block uppercase italic">${a.type}</span>${a.note ? `<div class="hashtag-red"># ${a.note}</div>` : ''}<div class="flex justify-between items-center mt-4 pt-3 border-t border-gray-50"><span class="text-[10px] font-black text-gray-400">預算 ¥${(a.cost || 0).toLocaleString()}</span><button onclick="location.href='${navUrl}'" class="px-3 py-1 bg-emerald-50 rounded-xl text-emerald-600 text-[10px] font-black italic">導航 📍</button></div></div></div>`}).join('') || `<p class="text-center text-gray-300 py-10 italic">Day ${currentDay} 無行程</p>`;
+                const navUrl = "https://www.google.com/maps/dir/?api=1&destination=" + q + "&travelmode=transit";
+                return `<div class="flex items-start space-x-4"><div class="flex flex-col items-center mt-1"><div class="w-10 h-10 rounded-full border-4 border-white shadow-md flex flex-col items-center justify-center text-white timeline-dot-${a.type}"><span class="text-[9px] font-black leading-none mb-0.5">${i+1}</span><span class="text-[10px] leading-none">${ICONS_MAP[a.type] || "📍"}</span></div><span class="text-[9px] font-black text-gray-400 mt-2">${a.time}</span></div><div class="flex-grow bg-white rounded-3xl p-5 card-shadow border border-gray-50 relative text-left"><div class="absolute top-4 right-4 flex space-x-2"><button class="edit-it-btn text-emerald-600 text-[10px] font-bold" data-idx="${i}">✎</button><button class="del-it-btn text-red-400 text-[10px] font-bold" data-idx="${i}">✕</button></div><h3 class="font-black text-gray-900 pr-10">${a.title}</h3><span class="text-[9px] px-2 py-0.5 rounded-full font-black type-tag-${a.type} mt-1 inline-block uppercase italic">${a.type}</span>${a.note ? `<div class="hashtag-red"># ${a.note}</div>` : ''}<div class="flex justify-between items-center mt-4 pt-3 border-t border-gray-50"><span class="text-[10px] font-black text-gray-400">預算 ¥${(a.cost || 0).toLocaleString()}</span><button onclick="window.location.assign('${navUrl}')" class="px-3 py-1 bg-emerald-50 rounded-xl text-emerald-600 text-[10px] font-black italic">導航 📍</button></div></div></div>`}).join('') || `<p class="text-center text-gray-300 py-10 italic">Day ${currentDay} 無行程</p>`;
             list.querySelectorAll('.edit-it-btn').forEach(b => b.onclick = () => { editIndex = parseInt(b.dataset.idx); editItemType='itinerary'; openModal(); });
             list.querySelectorAll('.del-it-btn').forEach(b => b.onclick = () => { if(confirm("刪除行程？")) { tripData[currentDay-1].activities.splice(parseInt(b.dataset.idx), 1); saveToCloud('itinerary'); } });
         }
@@ -289,7 +287,11 @@
                 const realIdx = publicSpendings.indexOf(s), whoPaid = s.whoPaid || [], perCost = Math.round(s.cost / (s.parts.length || 1));
                 const isSettled = s.parts.length > 0 && s.parts.every(p => whoPaid.includes(p));
                 return `<div class="bg-blue-50/50 p-5 rounded-3xl border-2 border-blue-100 relative ${isSettled ? 'settled' : ''} text-left mb-4"><div class="flex items-center justify-between mb-4"><div class="flex items-center space-x-3"><input type="checkbox" class="sync-check w-7 h-7 accent-emerald-600" ${whoPaid.includes(currentUser) ? 'checked' : ''} ${s.payer === currentUser ? 'disabled' : ''} data-id="${realIdx}"><h4 class="font-black text-gray-800 text-lg">${s.title} <span class="text-blue-600">¥${s.cost.toLocaleString()}</span></h4></div><div class="flex space-x-2"><button class="edit-sp-btn text-blue-400 font-bold" data-idx="${realIdx}" data-type="pub">✎</button><button class="del-sp-btn text-red-300 font-bold" data-idx="${realIdx}" data-type="pub">✕</button></div></div><div class="flex justify-between items-center mt-3 pt-3 border-t border-blue-100/50"><p class="text-[10px] font-bold text-blue-400 uppercase italic">由 ${s.payer} 代墊 | 每人 ¥${perCost.toLocaleString()}</p><div class="flex space-x-1.5">${s.parts.map(m => `<div class="pay-avatar ${whoPaid.includes(m) ? 'paid' : 'unpaid'} border-2 border-white shadow-sm">${whoPaid.includes(m) ? '✓' : m.substring(0,1)}</div>`).join('')}</div></div></div>`}).join('') || `<p class="text-center text-gray-300 py-10 italic">今日無分帳</p>`;
-            list.querySelectorAll('.sync-check').forEach(ck => ck.onchange = () => { const idx = ck.dataset.id; if(!publicSpendings[idx].whoPaid) publicSpendings[idx].whoPaid = []; if(ck.checked) publicSpendings[idx].whoPaid.push(currentUser); else publicSpendings[idx].whoPaid = publicSpendings[idx].whoPaid.filter(u => u !== currentUser); saveToCloud('publicSpend'); });
+            list.querySelectorAll('.sync-check').forEach(ck => ck.onchange = () => {
+                const idx = ck.dataset.id; if(!publicSpendings[idx].whoPaid) publicSpendings[idx].whoPaid = [];
+                if(ck.checked) publicSpendings[idx].whoPaid.push(currentUser); else publicSpendings[idx].whoPaid = publicSpendings[idx].whoPaid.filter(u => u !== currentUser);
+                saveToCloud('publicSpend');
+            });
             list.querySelectorAll('.edit-sp-btn').forEach(b => b.onclick = () => { editIndex = parseInt(b.dataset.idx); editItemType = 'pub'; openModal(); });
             list.querySelectorAll('.del-sp-btn').forEach(b => b.onclick = () => { if(confirm("刪除分帳？")) { publicSpendings.splice(b.dataset.idx, 1); saveToCloud('publicSpend'); syncAndRender(); } });
         }
@@ -297,7 +299,10 @@
         function showExpenseSummary() {
             const content = document.getElementById('summary-content');
             const debtMatrix = {}; MEMBERS.forEach(m1 => { debtMatrix[m1] = {}; MEMBERS.forEach(m2 => debtMatrix[m1][m2] = 0); });
-            publicSpendings.forEach(s => { const whoPaid = s.whoPaid || [], perCost = s.cost / (s.parts.length || 1); s.parts.forEach(m => { if (m !== s.payer && !whoPaid.includes(m)) debtMatrix[m][s.payer] += perCost; }); });
+            publicSpendings.forEach(s => { 
+                const whoPaid = s.whoPaid || [], perCost = s.cost / (s.parts.length || 1);
+                s.parts.forEach(m => { if (m !== s.payer && !whoPaid.includes(m)) debtMatrix[m][s.payer] += perCost; });
+            });
             const suggestions = [];
             for (let i = 0; i < MEMBERS.length; i++) {
                 for (let j = i + 1; j < MEMBERS.length; j++) {
@@ -308,15 +313,16 @@
             }
             const grouped = {}; suggestions.forEach(s => { if (!grouped[s.from]) grouped[s.from] = []; grouped[s.from].push(s); });
             let myOwe = 0, myGet = 0; suggestions.forEach(s => { if (s.from === currentUser) myOwe += s.amount; if (s.to === currentUser) myGet += s.amount; });
-            let html = `<div><h3 class="text-xs font-black text-gray-400 mb-3 uppercase">我的目前狀態</h3><div class="bg-gray-50 p-6 rounded-3xl mb-8"><p class="text-3xl font-black ${myGet-myOwe>=0?'text-emerald-600':'text-red-400'}">${myGet-myOwe>0?'+':''}${(myGet-myOwe).toLocaleString()}</p></div></div><div class="space-y-6">`;
-            Object.keys(grouped).forEach(debtor => { html += `<div class="bg-blue-50/50 rounded-[2rem] p-5 border border-blue-100"><h4 class="text-xs font-black text-blue-400 mb-4 px-2 uppercase">${debtor} 需支付：</h4><div class="space-y-2">${grouped[debtor].map(s => `<div class="flex items-center justify-between bg-white p-4 rounded-2xl shadow-sm"><span class="font-bold">➜ ${s.to}</span><span class="font-black text-emerald-600">¥${s.amount.toLocaleString()}</span></div>`).join('')}</div></div>`; });
+            let html = `<div><h3 class="text-xs font-black text-gray-400 mb-3">我的狀態</h3><div class="bg-gray-50 p-6 rounded-3xl mb-8 text-center"><p class="text-3xl font-black ${myGet-myOwe>=0?'text-emerald-600':'text-red-400'}">${myGet-myOwe>0?'+':''}${(myGet-myOwe).toLocaleString()}</p></div></div><div class="space-y-6 text-left">`;
+            Object.keys(grouped).forEach(debtor => {
+                html += `<div class="bg-blue-50/50 rounded-[2rem] p-5 border border-blue-100"><h4 class="text-xs font-black text-blue-400 mb-4 px-2 uppercase">${debtor} 需支付：</h4><div class="space-y-2">${grouped[debtor].map(s => `<div class="flex items-center justify-between bg-white p-4 rounded-2xl shadow-sm"><span class="font-bold">➜ ${s.to}</span><span class="font-black text-emerald-600">¥${s.amount.toLocaleString()}</span></div>`).join('')}</div></div>`;
+            });
             content.innerHTML = html + `</div>`;
             document.getElementById('summary-modal').classList.add('active');
         }
 
         function renderChecklist() {
             const list = document.getElementById('checklist-list');
-            privateChecklist = JSON.parse(localStorage.getItem('BH_Check_v5')) || [{text: "護照", done: false}];
             list.innerHTML = privateChecklist.map((item, i) => `<div class="flex items-center bg-white p-5 rounded-3xl border border-gray-50 card-shadow text-left mb-3"><input type="checkbox" ${item.done ? 'checked' : ''} class="ck-box w-6 h-6 accent-emerald-600 flex-shrink-0" data-idx="${i}"><div class="flex-grow ml-4"><p class="text-sm font-black ${item.done ? 'text-gray-300 line-through' : ''}">${item.text}</p></div></div>`).join('');
             list.querySelectorAll('.ck-box').forEach(ck => ck.onchange = () => { privateChecklist[ck.dataset.idx].done = ck.checked; localStorage.setItem('BH_Check_v5', JSON.stringify(privateChecklist)); syncAndRender(); });
         }
@@ -351,9 +357,9 @@
 
         function handleSave() {
             const getVal = (id) => document.getElementById(id) ? document.getElementById(id).value : "";
-            const formatTime = (v) => { let d = v.replace(/\D/g, '').padStart(4, '0'); return d.substring(0,2) + ":" + d.substring(2,4); };
+            const formatTimeFunc = (v) => { let d = v.replace(/\D/g, '').padStart(4, '0'); return d.substring(0,2) + ":" + d.substring(2,4); };
             if (currentPage === 'itinerary') {
-                const entry = { title: getVal('in-title'), time: formatTime(getVal('in-time') || "0000"), type: getVal('in-type'), note: getVal('in-note'), address: getVal('in-address'), cost: parseInt(getVal('in-cost')) || 0 };
+                const entry = { title: getVal('in-title'), time: formatTimeFunc(getVal('in-time') || "0000"), type: getVal('in-type'), note: getVal('in-note'), address: getVal('in-address'), cost: parseInt(getVal('in-cost')) || 0 };
                 if (!tripData[currentDay-1]) tripData[currentDay-1] = {activities: []};
                 if (editIndex === -1) tripData[currentDay-1].activities.push(entry); else tripData[currentDay-1].activities[editIndex] = entry;
                 tripData[currentDay-1].activities.sort((a,b) => a.time.localeCompare(b.time)); saveToCloud('itinerary');
@@ -374,8 +380,9 @@
             document.getElementById('add-modal').classList.remove('active'); editIndex = -1;
         }
 
+        // --- 點擊監聽器 ---
         document.getElementById('config-btn').onclick = () => { document.getElementById('config-start-date').value = tripConfig.start; document.getElementById('config-end-date').value = tripConfig.end; document.getElementById('config-modal').classList.add('active'); };
-        document.getElementById('config-save-btn').onclick = () => { tripConfig.start = document.getElementById('config-start-date').value; tripConfig.end = document.getElementById('config-end-date').value; saveToCloud('config'); document.getElementById('config-modal').classList.remove('active'); location.reload(); };
+        document.getElementById('config-save-btn').onclick = () => { tripConfig.start = document.getElementById('config-start-date').value; tripConfig.end = document.getElementById('config-end-date').value; saveToCloud('config'); document.getElementById('config-modal').classList.remove('active'); window.location.reload(); };
         document.getElementById('config-cancel-btn').onclick = () => document.getElementById('config-modal').classList.remove('active');
         document.getElementById('fab-add').onclick = openModal;
         document.getElementById('modal-save-btn').onclick = handleSave;
@@ -385,15 +392,17 @@
         document.getElementById('nav-checklist').onclick = () => { currentPage = 'checklist'; syncAndRender(); };
         document.getElementById('nav-budget').onclick = () => { currentPage = 'budget'; syncAndRender(); };
         document.getElementById('nav-notes').onclick = () => { currentPage = 'notes'; syncAndRender(); };
-        document.getElementById('weather-btn').onclick = () => { location.href = "https://tenki.jp/forecast/6/"; };
+        document.getElementById('weather-btn').onclick = () => { window.location.assign("https://tenki.jp/forecast/6/"); };
         document.getElementById('route-map-btn').onclick = () => {
             if (currentPage === 'itinerary') {
                 const locs = (tripData[currentDay-1]?.activities || []).map(a => a.address || a.title).filter(l => l);
                 if(locs.length < 1) return alert("無行程");
-                location.href = "https" + "://" + "www.google.com" + "/maps/dir/?api=1&origin=" + encodeURIComponent(locs[0]) + "&destination=" + encodeURIComponent(locs[locs.length-1]) + "&travelmode=transit" + (locs.length > 2 ? "&waypoints=" + locs.slice(1, -1).map(l => encodeURIComponent(l)).join('|') : "");
+                const origin = encodeURIComponent(locs[0]), dest = encodeURIComponent(locs[locs.length-1]);
+                let url = "https://www.google.com/maps/dir/?api=1&origin=" + origin + "&destination=" + dest + "&travelmode=transit" + (locs.length > 2 ? "&waypoints=" + locs.slice(1, -1).map(l => encodeURIComponent(l)).join('|') : "");
+                window.location.assign(url);
             } else { showExpenseSummary(); }
         };
-        document.getElementById('header-title-btn').onclick = () => { if(confirm("切換身份？")) { localStorage.removeItem('BH_User_v5'); location.reload(); } };
+        document.getElementById('header-title-btn').onclick = () => { if(confirm("切換身份？")) { localStorage.removeItem('BH_User_v5'); window.location.reload(); } };
         
         syncAndRender();
     </script>
