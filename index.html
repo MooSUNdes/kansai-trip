@@ -3,15 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    
     <title>🌸 關西櫻花之旅</title>
-    
     <link rel="apple-touch-icon" href="icon.png">
     <link rel="icon" type="image/png" href="icon.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="關西櫻花">
-
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
@@ -44,16 +41,13 @@
         .pay-avatar { width: 28px; height: 28px; border-radius: 8px; font-size: 12px; font-weight: 900; display: flex; align-items: center; justify-content: center; }
         .paid { background-color: #10B981; color: white; transform: scale(1.1); }
         .unpaid { background-color: #F3F4F6; color: #9CA3AF; border: 1px solid #E5E7EB; }
-        /* 拖曳影子樣式 */
-        .sortable-drag { opacity: 0; }
-        .sortable-ghost { background: #E2E8F0 !important; border: 2px dashed #CBD5E1 !important; border-radius: 12px; }
+        .sortable-ghost { opacity: 0.3; background: #10B981 !important; border-radius: 12px; }
     </style>
 </head>
 <body>
 
     <div id="user-overlay" class="fixed inset-0 bg-white z-[300] flex flex-col items-center p-10 hidden">
         <h2 class="text-3xl font-black mb-2 text-emerald-600 italic mt-10 text-center">你是哪位成員？</h2>
-        <p class="text-gray-400 text-xs font-bold mb-8 uppercase tracking-widest text-center">WHO ARE YOU TODAY?</p>
         <div id="user-selector-grid" class="grid grid-cols-1 gap-4 w-full max-w-xs overflow-y-auto mb-10 pb-10"></div>
         <div class="fixed bottom-10 left-0 right-0 px-10 flex flex-col items-center">
             <button id="add-member-btn" class="w-full py-4 bg-gray-100 text-gray-500 rounded-2xl font-black text-sm mb-4">+ 新增團員</button>
@@ -66,9 +60,9 @@
             <p id="user-info-text" class="text-[10px] font-bold text-emerald-600 mt-0.5 uppercase tracking-widest italic font-black">同步中...</p>
         </div>
         <div class="flex items-center space-x-2 mb-1">
-            <button id="config-btn" class="bg-gray-100 px-2 py-1.5 rounded-xl text-gray-400 text-lg shadow-sm" title="行程設定">⚙️</button>
+            <button id="config-btn" class="bg-gray-100 px-2 py-1.5 rounded-xl text-gray-400 text-lg shadow-sm">⚙️</button>
             <button id="weather-btn" class="bg-blue-50 px-2 py-1.5 rounded-xl text-blue-500 text-lg shadow-sm">🌤️</button>
-            <div id="day-badge" class="bg-emerald-50 px-3 py-1.5 rounded-2xl text-emerald-600 text-[10px] font-black italic text-right">
+            <div id="day-badge" class="bg-emerald-50 px-3 py-1.5 rounded-2xl text-emerald-600 text-[10px] font-black italic">
                 第 <span id="header-day-num">1</span> 天 | <span id="header-date-str">--/--</span>
             </div>
         </div>
@@ -77,15 +71,15 @@
     <div id="day-bar" class="bg-white border-b border-gray-50 flex-shrink-0 hidden">
         <div class="flex items-center px-4 py-3 space-x-3">
             <nav id="day-tabs-nav" class="flex-grow flex space-x-2 overflow-x-auto no-scrollbar pb-1"></nav>
-            <button id="route-map-btn" class="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-blue-500 text-white shadow-md active:scale-90 text-lg"></button>
+            <button id="route-map-btn" class="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-blue-500 text-white shadow-md text-lg"></button>
         </div>
     </div>
 
-    <main>
+    <main id="main-content">
         <section id="page-itinerary" class="page-content active px-6 py-6"><div id="itinerary-list" class="space-y-8"></div></section>
         <section id="page-checklist" class="page-content px-6 py-8"><h2 class="text-xl font-black mb-6 text-emerald-700">🧳 我的行李 (個人)</h2><div id="checklist-list" class="space-y-3"></div></section>
         <section id="page-budget" class="page-content px-6 py-8">
-            <h2 class="text-xl font-black mb-6 text-emerald-700">💰 旅途支出結算 (公開)</h2>
+            <h2 class="text-xl font-black mb-6 text-emerald-700">💰 旅途支出結算</h2>
             <div class="bg-white p-6 rounded-[2rem] card-shadow border border-gray-50 text-center mb-6 grid grid-cols-2 gap-4 divide-x">
                 <div><p class="text-gray-400 text-[10px] font-bold mb-1 uppercase">今日應分擔</p><p id="disp-today-cost" class="text-xl font-black text-emerald-600">¥0</p></div>
                 <div><p class="text-gray-400 text-[10px] font-bold mb-1 uppercase">旅程總分擔</p><p id="disp-total-cost" class="text-xl font-black text-blue-600">¥0</p></div>
@@ -137,7 +131,7 @@
         <div class="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl max-h-[85vh] overflow-y-auto relative text-center">
             <button id="close-summary-btn" class="absolute top-6 right-6 text-gray-300 font-bold text-xl">✕</button>
             <h2 class="text-xl font-black mb-6 text-emerald-600 italic text-center">精準帳務分析 📊</h2>
-            <div id="summary-content" class="space-y-6 pb-4"></div>
+            <div id="summary-content" class="space-y-6 pb-4 text-left"></div>
         </div>
     </div>
 
@@ -152,41 +146,31 @@
         let currentUser = localStorage.getItem('BH_User_v5');
         let currentDay = 1, currentPage = 'itinerary', editIndex = -1, editItemType = null;
         let MEMBERS = JSON.parse(localStorage.getItem('BH_Members_v5')) || ["木木", "癡心杰對", "志在剛好", "阿汶美女"];
-        
         let tripConfig = JSON.parse(localStorage.getItem('BH_Config_v5')) || { start: "2026-04-13", end: "2026-04-20" };
         let DATES = [];
-        let tripData = []; // 實際行程存放區
+        let tripData = [];
+        let notes = [], publicSpendings = [], privateChecklist = [], privateSpendings = [];
 
-        function generateDates() {
+        // --- 安全的日期生成 ---
+        function updateDateArray() {
             const start = new Date(tripConfig.start);
             const end = new Date(tripConfig.end);
-            const dates = [];
-            if (isNaN(start) || isNaN(end)) return;
-            for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-                dates.push((d.getMonth() + 1) + "/" + d.getDate());
+            DATES = [];
+            if (!isNaN(start) && !isNaN(end)) {
+                for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+                    DATES.push((d.getMonth() + 1) + "/" + d.getDate());
+                }
             }
-            DATES = dates;
-            // 關鍵保護：確保 tripData 長度至少與天數相等，不輕易清空
-            while (tripData.length < DATES.length) {
-                tripData.push({ activities: [] });
-            }
+            // 補齊 tripData 格子，防止 undefined 錯誤
+            while (tripData.length < DATES.length) tripData.push({ activities: [] });
+            if (currentDay > DATES.length) currentDay = 1;
         }
 
-        const ICONS = { "景點": "⛩️", "美食": "🍜", "購物": "🛍️", "移動": "🚃" };
-        let notes = [], publicSpendings = [];
-        let privateChecklist = JSON.parse(localStorage.getItem('BH_Check_v5')) || [
-            { text: "護照、日幣、信用卡", note: "確認護照效期大於6個月", done: false },
-            { text: "行動電源", note: "必須隨身！嚴禁托運", done: false },
-            { text: "隨身液體規範", note: "單件<100ml，需透明拉鍊袋裝", done: false }
-        ];
-        let privateSpendings = JSON.parse(localStorage.getItem('BH_Spend_v5')) || [];
-
         const syncAndRender = () => {
-            generateDates();
+            updateDateArray();
             if (!currentUser) { renderUserSelector(); return; }
             document.getElementById('user-overlay').classList.add('hidden');
             document.getElementById('user-info-text').innerText = `團員：${currentUser}`;
-            if (currentDay > DATES.length) currentDay = 1;
             document.getElementById('header-day-num').innerText = currentDay;
             document.getElementById('header-date-str').innerText = DATES[currentDay-1] || "--/--";
             
@@ -195,7 +179,9 @@
             document.getElementById('route-map-btn').innerText = currentPage === 'itinerary' ? "🗺️" : "📊";
             
             document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
-            document.getElementById(`page-${currentPage}`).classList.add('active');
+            const targetPage = document.getElementById(`page-${currentPage}`);
+            if (targetPage) targetPage.classList.add('active');
+
             document.querySelectorAll('.nav-btn-item').forEach(btn => btn.classList.remove('active-nav'));
             document.getElementById(`nav-${currentPage}`).classList.add('active-nav');
 
@@ -209,7 +195,7 @@
         // --- Firebase 監聽 ---
         onValue(ref(db, 'members'), (s) => { if(s.val()) { MEMBERS = s.val(); localStorage.setItem('BH_Members_v5', JSON.stringify(MEMBERS)); } if(!currentUser) renderUserSelector(); else syncAndRender(); });
         onValue(ref(db, 'tripConfig'), (s) => { if(s.val()) { tripConfig = s.val(); localStorage.setItem('BH_Config_v5', JSON.stringify(tripConfig)); syncAndRender(); } });
-        onValue(ref(db, 'tripData'), (s) => { if(s.val()) { tripData = s.val(); syncAndRender(); } });
+        onValue(ref(db, 'tripData'), (s) => { tripData = s.val() || []; syncAndRender(); });
         onValue(ref(db, 'notes'), (s) => { notes = s.val() || []; syncAndRender(); });
         onValue(ref(db, 'publicSpend'), (s) => { publicSpendings = s.val() || []; syncAndRender(); });
 
@@ -221,24 +207,17 @@
             if(t==='members') fbSet(ref(db, 'members'), MEMBERS);
         };
 
-        // --- 拖曳排序邏輯 (防誤觸加強版) ---
-        const initSortable = () => {
+        // --- 防誤觸拖曳 ---
+        let sortableInstance = null;
+        function initSortable() {
             const el = document.getElementById('day-tabs-nav');
-            if (el.sortable) el.sortable.destroy(); // 防止重複初始化
-            el.sortable = Sortable.create(el, {
-                delay: 800, // 核心：必須按住 0.8 秒才會開始拖曳
-                delayOnTouchOnly: true,
-                touchStartThreshold: 5,
-                animation: 300,
-                ghostClass: 'sortable-ghost',
+            if (sortableInstance) sortableInstance.destroy();
+            sortableInstance = Sortable.create(el, {
+                delay: 800, delayOnTouchOnly: true, animation: 250, ghostClass: 'sortable-ghost',
                 onEnd: (evt) => {
                     if (evt.oldIndex === evt.newIndex) return;
-                    
-                    // 1. 交換 tripData 陣列 (行程本體)
                     const movedItem = tripData.splice(evt.oldIndex, 1)[0];
                     tripData.splice(evt.newIndex, 0, movedItem);
-                    
-                    // 2. 同步移動該天的分帳項目
                     const oldD = evt.oldIndex + 1, newD = evt.newIndex + 1;
                     publicSpendings.forEach(s => { if(s.day === oldD) s.day = 999; });
                     publicSpendings.forEach(s => {
@@ -246,89 +225,79 @@
                         else { if(s.day >= newD && s.day < oldD) s.day++; }
                     });
                     publicSpendings.forEach(s => { if(s.day === 999) s.day = newD; });
-
                     currentDay = newD;
                     saveToCloud('itinerary');
                     saveToCloud('publicSpend');
                 }
             });
-        };
+        }
+
+        // --- UI 功能 ---
+        function renderUserSelector() {
+            const grid = document.getElementById('user-selector-grid');
+            grid.innerHTML = MEMBERS.map((m, idx) => `
+                <div class="flex items-center space-x-2">
+                    <button class="user-pick flex-grow bg-gray-50 border border-gray-100 p-5 rounded-2xl font-black text-gray-700 text-left" data-user="${m}">${m}</button>
+                    <button class="edit-mem text-emerald-500 bg-emerald-50 w-14 h-14 rounded-2xl font-bold" data-idx="${idx}">✎</button>
+                    <button class="del-mem text-red-400 bg-red-50 w-14 h-14 rounded-2xl font-bold" data-idx="${idx}">✕</button>
+                </div>`).join('');
+            document.getElementById('user-overlay').classList.remove('hidden');
+            grid.querySelectorAll('.user-pick').forEach(btn => btn.onclick = () => { localStorage.setItem('BH_User_v5', btn.dataset.user); currentUser = btn.dataset.user; syncAndRender(); });
+            grid.querySelectorAll('.edit-mem').forEach(btn => btn.onclick = () => { 
+                const oldName = MEMBERS[btn.dataset.idx];
+                const n = prompt("更改名稱：", oldName); 
+                if(n && n.trim() !== "") { 
+                    const newName = n.trim();
+                    MEMBERS[btn.dataset.idx] = newName; 
+                    if(currentUser === oldName) { currentUser = newName; localStorage.setItem('BH_User_v5', currentUser); }
+                    publicSpendings.forEach(s => { if(s.payer === oldName) s.payer = newName; if(s.parts) s.parts = s.parts.map(p => p === oldName ? newName : p); if(s.whoPaid) s.whoPaid = s.whoPaid.map(p => p === oldName ? newName : p); });
+                    saveToCloud('publicSpend'); saveToCloud('members'); 
+                } 
+            });
+            grid.querySelectorAll('.del-mem').forEach(btn => btn.onclick = () => { if(confirm(`確定刪除 ${MEMBERS[btn.dataset.idx]} 嗎？`)) { MEMBERS.splice(btn.dataset.idx, 1); if(currentUser === MEMBERS[btn.dataset.idx]) { localStorage.removeItem('BH_User_v5'); currentUser = null; } saveToCloud('members'); } });
+        }
 
         function renderDayTabs() {
             const nav = document.getElementById('day-tabs-nav');
-            nav.innerHTML = DATES.map((d, i) => `<button class="day-tab-trigger flex-shrink-0 px-4 py-2 rounded-xl text-[11px] font-black flex flex-col items-center ${currentDay === (i+1) ? 'active-tab shadow-md' : 'bg-gray-100 text-gray-400'}" data-d="${i+1}"><span>Day ${i+1}</span><span class="text-[8px] opacity-70">${d}</span></button>`).join('');
-            nav.querySelectorAll('.day-tab-trigger').forEach(btn => { 
-                btn.onclick = () => { currentDay = parseInt(btn.getAttribute('data-d')); syncAndRender(); }; 
-            });
+            nav.innerHTML = DATES.map((d, i) => `<button class="day-tab-trigger flex-shrink-0 px-4 py-2 rounded-xl text-[11px] font-black flex flex-col items-center ${currentDay === (i+1) ? 'active-tab' : 'bg-gray-100 text-gray-400'}" data-d="${i+1}"><span>Day ${i+1}</span><span class="text-[8px] opacity-70">${d}</span></button>`).join('');
+            nav.querySelectorAll('.day-tab-trigger').forEach(btn => { btn.onclick = () => { currentDay = parseInt(btn.getAttribute('data-d')); syncAndRender(); }; });
             initSortable();
         }
 
-        // --- 其餘渲染功能 (行程, 分帳, 結算等) ---
         function renderItinerary() {
             const list = document.getElementById('itinerary-list');
             const dayActs = tripData[currentDay-1]?.activities || [];
             list.innerHTML = dayActs.map((a, i) => {
                 const q = encodeURIComponent(a.address || a.title);
                 const navUrl = "https" + "://" + "www.google.com" + "/maps/dir/?api=1&destination=" + q + "&travelmode=transit";
-                return `
-                <div class="flex items-start space-x-4">
-                    <div class="flex flex-col items-center mt-1">
-                        <div class="w-10 h-10 rounded-full border-4 border-white shadow-md flex flex-col items-center justify-center text-white timeline-dot-${a.type}">
-                            <span class="text-[9px] font-black leading-none mb-0.5">${i+1}</span>
-                            <span class="text-[10px] leading-none">${ICONS[a.type] || "📍"}</span>
-                        </div>
-                        <span class="text-[9px] font-black text-gray-400 mt-2">${a.time}</span>
-                    </div>
-                    <div class="flex-grow bg-white rounded-3xl p-5 card-shadow border border-gray-50 relative text-left">
-                        <div class="absolute top-4 right-4 flex space-x-2"><button class="edit-it-btn text-emerald-600 text-[10px] font-bold" data-idx="${i}">✎</button><button class="del-it-btn text-red-400 text-[10px] font-bold" data-idx="${i}">✕</button></div>
-                        <h3 class="font-black text-gray-900 pr-10">${a.title}</h3>
-                        <span class="text-[9px] px-2 py-0.5 rounded-full font-black type-tag-${a.type} mt-1 inline-block uppercase italic">${a.type}</span>
-                        ${a.note ? `<div class="hashtag-red"># ${a.note}</div>` : ''}
-                        <div class="flex justify-between items-center mt-4 pt-3 border-t border-gray-50">
-                            <span class="text-[10px] font-black text-gray-400">預算 ¥${(a.cost || 0).toLocaleString()}</span>
-                            <button onclick="location.href='${navUrl}'" class="px-3 py-1 bg-emerald-50 rounded-xl text-emerald-600 text-[10px] font-black italic">導航 📍</button>
-                        </div>
-                    </div>
-                </div>`}).join('') || `<p class="text-center text-gray-300 py-10 italic font-black">Day ${currentDay} 無行程</p>`;
+                const ICONS = { "景點": "⛩️", "美食": "🍜", "購物": "🛍️", "移動": "🚃" };
+                return `<div class="flex items-start space-x-4"><div class="flex flex-col items-center mt-1"><div class="w-10 h-10 rounded-full border-4 border-white shadow-md flex flex-col items-center justify-center text-white timeline-dot-${a.type}"><span class="text-[9px] font-black mb-0.5">${i+1}</span><span class="text-[10px]">${ICONS[a.type] || "📍"}</span></div><span class="text-[9px] font-black text-gray-400 mt-2">${a.time}</span></div><div class="flex-grow bg-white rounded-3xl p-5 card-shadow border border-gray-50 relative text-left"><div class="absolute top-4 right-4 flex space-x-2"><button class="edit-it-btn text-emerald-600 text-[10px] font-bold" data-idx="${i}">✎</button><button class="del-it-btn text-red-400 text-[10px] font-bold" data-idx="${i}">✕</button></div><h3 class="font-black text-gray-900 pr-10">${a.title}</h3><span class="text-[9px] px-2 py-0.5 rounded-full font-black type-tag-${a.type} mt-1 inline-block uppercase italic">${a.type}</span>${a.note ? `<div class="hashtag-red"># ${a.note}</div>` : ''}<div class="flex justify-between items-center mt-4 pt-3 border-t border-gray-50"><span class="text-[10px] font-black text-gray-400">預算 ¥${(a.cost || 0).toLocaleString()}</span><button onclick="location.href='${navUrl}'" class="px-3 py-1 bg-emerald-50 rounded-xl text-emerald-600 text-[10px] font-black italic">導航 📍</button></div></div></div>`}).join('') || `<p class="text-center text-gray-300 py-10 italic">Day ${currentDay} 無行程</p>`;
             list.querySelectorAll('.edit-it-btn').forEach(b => b.onclick = () => { editIndex = parseInt(b.dataset.idx); editItemType='itinerary'; openModal(); });
-            list.querySelectorAll('.del-it-btn').forEach(b => b.onclick = () => { if(confirm("確定刪除行程？")) { tripData[currentDay-1].activities.splice(parseInt(b.dataset.idx), 1); saveToCloud('itinerary'); } });
+            list.querySelectorAll('.del-it-btn').forEach(b => b.onclick = () => { if(confirm("刪除行程？")) { tripData[currentDay-1].activities.splice(parseInt(b.dataset.idx), 1); saveToCloud('itinerary'); } });
         }
 
         function renderBudget() {
             const list = document.getElementById('budget-list');
             const dayPub = publicSpendings.filter(s => s.day === currentDay);
-            const dayPriv = privateSpendings.filter(s => s.day === currentDay);
             let todaySum = 0;
             publicSpendings.filter(x => x.day === currentDay && x.parts?.includes(currentUser)).forEach(x => todaySum += (x.cost / (x.parts.length || 1)));
-            dayPriv.filter(x => x.day === currentDay).forEach(x => todaySum += (x.cost || 0));
             let totalSum = 0;
             publicSpendings.filter(x => x.parts?.includes(currentUser)).forEach(x => totalSum += (x.cost / (x.parts.length || 1)));
-            privateSpendings.forEach(x => totalSum += (x.cost || 0));
             document.getElementById('disp-today-cost').innerText = `¥${Math.round(todaySum).toLocaleString()}`;
             document.getElementById('disp-total-cost').innerText = `¥${Math.round(totalSum).toLocaleString()}`;
             list.innerHTML = dayPub.map(s => {
                 const realIdx = publicSpendings.indexOf(s), whoPaid = s.whoPaid || [], perCost = Math.round(s.cost / (s.parts.length || 1));
                 const isSettled = s.parts.length > 0 && s.parts.every(p => whoPaid.includes(p));
-                return `<div class="bg-blue-50/50 p-5 rounded-3xl border-2 border-blue-100 relative ${isSettled ? 'settled' : ''} text-left mb-4"><div class="flex items-center justify-between mb-4"><div class="flex items-center space-x-3"><input type="checkbox" class="sync-check w-7 h-7 accent-emerald-600" ${whoPaid.includes(currentUser) ? 'checked' : ''} ${s.payer === currentUser ? 'disabled' : ''} data-id="${realIdx}"><h4 class="font-black text-gray-800 text-lg">${s.title} <span class="text-blue-600">¥${s.cost.toLocaleString()}</span></h4></div><div class="flex space-x-2"><button class="edit-sp-btn text-blue-400 font-bold" data-idx="${realIdx}" data-type="pub">✎</button><button class="del-sp-btn text-red-300 font-bold" data-idx="${realIdx}" data-type="pub">✕</button></div></div><div class="flex justify-between items-center mt-3 pt-3 border-t border-blue-100/50"><p class="text-[10px] font-bold text-blue-400 uppercase italic">由 ${s.payer} 代墊 | 每人: <span class="text-emerald-600 font-black">¥${perCost.toLocaleString()}</span></p><div class="flex space-x-1.5">${s.parts.map(m => `<div class="pay-avatar ${whoPaid.includes(m) ? 'paid' : 'unpaid'} border-2 border-white shadow-sm">${whoPaid.includes(m) ? '✓' : m.substring(0,1)}</div>`).join('')}</div></div></div>`).join('') + 
-                dayPriv.map(s => `<div class="bg-white p-5 rounded-3xl card-shadow border border-gray-100 relative text-left mb-4"><div class="absolute top-4 right-4 flex space-x-2"><button class="edit-sp-btn icon-btn text-emerald-400" data-idx="${privateSpendings.indexOf(s)}" data-type="pri">✎</button><button class="del-sp-btn icon-btn text-red-300" data-idx="${privateSpendings.indexOf(s)}" data-type="pri">✕</button></div><h4 class="font-black text-gray-800">${s.title} <span class="text-emerald-600 ml-1">¥${s.cost.toLocaleString()}</span></h4><p class="text-[9px] font-bold text-gray-400 uppercase italic mt-1 font-black">個人私帳項目</p></div>`).join('') || `<p class="text-center text-gray-300 py-10 italic">No Data</p>`;
-            
-            list.querySelectorAll('.sync-check').forEach(ck => ck.onchange = () => {
-                const idx = ck.dataset.id; if(!publicSpendings[idx].whoPaid) publicSpendings[idx].whoPaid = [];
-                if(ck.checked) { if(!publicSpendings[idx].whoPaid.includes(currentUser)) publicSpendings[idx].whoPaid.push(currentUser); }
-                else { publicSpendings[idx].whoPaid = publicSpendings[idx].whoPaid.filter(u => u !== currentUser); }
-                saveToCloud('publicSpend');
-            });
-            list.querySelectorAll('.edit-sp-btn').forEach(b => b.onclick = () => { editIndex = parseInt(b.dataset.idx); editItemType = b.dataset.type; openModal(); });
-            list.querySelectorAll('.del-sp-btn').forEach(b => b.onclick = () => { if(confirm("確定刪除支出？")) { if(b.dataset.type==='pub') publicSpendings.splice(b.dataset.idx, 1); else privateSpendings.splice(b.dataset.idx, 1); saveToCloud('publicSpend'); syncAndRender(); } });
+                return `<div class="bg-blue-50/50 p-5 rounded-3xl border-2 border-blue-100 relative ${isSettled ? 'settled' : ''} text-left mb-4"><div class="flex items-center justify-between mb-4"><div class="flex items-center space-x-3"><input type="checkbox" class="sync-check w-7 h-7 accent-emerald-600" ${whoPaid.includes(currentUser) ? 'checked' : ''} ${s.payer === currentUser ? 'disabled' : ''} data-id="${realIdx}"><h4 class="font-black text-gray-800 text-lg">${s.title} <span class="text-blue-600">¥${s.cost.toLocaleString()}</span></h4></div><div class="flex space-x-2"><button class="edit-sp-btn text-blue-400 font-bold" data-idx="${realIdx}" data-type="pub">✎</button><button class="del-sp-btn text-red-300 font-bold" data-idx="${realIdx}" data-type="pub">✕</button></div></div><div class="flex justify-between items-center mt-3 pt-3 border-t border-blue-100/50"><p class="text-[10px] font-bold text-blue-400 uppercase italic">由 ${s.payer} 代墊 | 每人 ¥${perCost.toLocaleString()}</p><div class="flex space-x-1.5">${s.parts.map(m => `<div class="pay-avatar ${whoPaid.includes(m) ? 'paid' : 'unpaid'} border-2 border-white shadow-sm">${whoPaid.includes(m) ? '✓' : m.substring(0,1)}</div>`).join('')}</div></div></div>`}).join('') || `<p class="text-center text-gray-300 py-10 italic">今日無分帳</p>`;
+            list.querySelectorAll('.sync-check').forEach(ck => ck.onchange = () => { const idx = ck.dataset.id; if(!publicSpendings[idx].whoPaid) publicSpendings[idx].whoPaid = []; if(ck.checked) publicSpendings[idx].whoPaid.push(currentUser); else publicSpendings[idx].whoPaid = publicSpendings[idx].whoPaid.filter(u => u !== currentUser); saveToCloud('publicSpend'); });
+            list.querySelectorAll('.edit-sp-btn').forEach(b => b.onclick = () => { editIndex = parseInt(b.dataset.idx); editItemType = 'pub'; openModal(); });
+            list.querySelectorAll('.del-sp-btn').forEach(b => b.onclick = () => { if(confirm("刪除分帳？")) { publicSpendings.splice(b.dataset.idx, 1); saveToCloud('publicSpend'); syncAndRender(); } });
         }
 
         function showExpenseSummary() {
             const content = document.getElementById('summary-content');
             const debtMatrix = {}; MEMBERS.forEach(m1 => { debtMatrix[m1] = {}; MEMBERS.forEach(m2 => debtMatrix[m1][m2] = 0); });
-            publicSpendings.forEach(s => { 
-                const whoPaid = s.whoPaid || [], perCost = s.cost / (s.parts.length || 1);
-                s.parts.forEach(m => { if (m !== s.payer && !whoPaid.includes(m)) debtMatrix[m][s.payer] += perCost; });
-            });
+            publicSpendings.forEach(s => { const whoPaid = s.whoPaid || [], perCost = s.cost / (s.parts.length || 1); s.parts.forEach(m => { if (m !== s.payer && !whoPaid.includes(m)) debtMatrix[m][s.payer] += perCost; }); });
             const suggestions = [];
             for (let i = 0; i < MEMBERS.length; i++) {
                 for (let j = i + 1; j < MEMBERS.length; j++) {
@@ -339,35 +308,17 @@
             }
             const grouped = {}; suggestions.forEach(s => { if (!grouped[s.from]) grouped[s.from] = []; grouped[s.from].push(s); });
             let myOwe = 0, myGet = 0; suggestions.forEach(s => { if (s.from === currentUser) myOwe += s.amount; if (s.to === currentUser) myGet += s.amount; });
-            let html = `<div><h3 class="text-xs font-black text-gray-400 mb-3">我的狀態</h3><div class="bg-gray-50 p-6 rounded-3xl mb-8"><p class="text-3xl font-black ${myGet-myOwe>=0?'text-emerald-600':'text-red-400'}">${myGet-myOwe>0?'+':''}${(myGet-myOwe).toLocaleString()}</p></div></div><div class="space-y-6 text-left">`;
-            Object.keys(grouped).forEach(debtor => {
-                html += `<div class="bg-blue-50/50 rounded-[2rem] p-5 border border-blue-100"><h4 class="text-xs font-black text-blue-400 mb-4 px-2 uppercase">${debtor} 需支付：</h4><div class="space-y-2">${grouped[debtor].map(s => `<div class="flex items-center justify-between bg-white p-4 rounded-2xl shadow-sm"><span class="font-bold">➜ ${s.to}</span><span class="font-black text-emerald-600">¥${s.amount.toLocaleString()}</span></div>`).join('')}</div></div>`;
-            });
+            let html = `<div><h3 class="text-xs font-black text-gray-400 mb-3 uppercase">我的目前狀態</h3><div class="bg-gray-50 p-6 rounded-3xl mb-8"><p class="text-3xl font-black ${myGet-myOwe>=0?'text-emerald-600':'text-red-400'}">${myGet-myOwe>0?'+':''}${(myGet-myOwe).toLocaleString()}</p></div></div><div class="space-y-6">`;
+            Object.keys(grouped).forEach(debtor => { html += `<div class="bg-blue-50/50 rounded-[2rem] p-5 border border-blue-100"><h4 class="text-xs font-black text-blue-400 mb-4 px-2 uppercase">${debtor} 需支付：</h4><div class="space-y-2">${grouped[debtor].map(s => `<div class="flex items-center justify-between bg-white p-4 rounded-2xl shadow-sm"><span class="font-bold">➜ ${s.to}</span><span class="font-black text-emerald-600">¥${s.amount.toLocaleString()}</span></div>`).join('')}</div></div>`; });
             content.innerHTML = html + `</div>`;
             document.getElementById('summary-modal').classList.add('active');
         }
 
-        // --- 設定按鈕與彈窗功能 ---
-        document.getElementById('config-btn').onclick = () => {
-            document.getElementById('config-start-date').value = tripConfig.start;
-            document.getElementById('config-end-date').value = tripConfig.end;
-            document.getElementById('config-modal').classList.add('active');
-        };
-        document.getElementById('config-save-btn').onclick = () => {
-            tripConfig.start = document.getElementById('config-start-date').value;
-            tripConfig.end = document.getElementById('config-end-date').value;
-            saveToCloud('config');
-            document.getElementById('config-modal').classList.remove('active');
-        };
-        document.getElementById('config-cancel-btn').onclick = () => document.getElementById('config-modal').classList.remove('active');
-
-        // --- 共用功能 ---
         function renderChecklist() {
             const list = document.getElementById('checklist-list');
-            list.innerHTML = privateChecklist.map((item, i) => `<div class="flex items-center bg-white p-5 rounded-3xl border border-gray-50 card-shadow text-left mb-3"><input type="checkbox" ${item.done ? 'checked' : ''} class="ck-box w-6 h-6 accent-emerald-600 flex-shrink-0" data-idx="${i}"><div class="flex-grow ml-4"><p class="text-sm font-black ${item.done ? 'text-gray-300 line-through italic' : ''}">${item.text}</p>${item.note ? `<p class="text-[10px] font-bold text-emerald-500 mt-1 italic">🚩 ${item.note}</p>` : ''}</div><div class="flex space-x-2 ml-2"><button class="edit-ck-btn text-emerald-600 font-bold text-xs" data-idx="${i}">✎</button><button class="del-check text-red-300 font-bold" data-idx="${i}">✕</button></div></div>`).join('');
+            privateChecklist = JSON.parse(localStorage.getItem('BH_Check_v5')) || [{text: "護照", done: false}];
+            list.innerHTML = privateChecklist.map((item, i) => `<div class="flex items-center bg-white p-5 rounded-3xl border border-gray-50 card-shadow text-left mb-3"><input type="checkbox" ${item.done ? 'checked' : ''} class="ck-box w-6 h-6 accent-emerald-600 flex-shrink-0" data-idx="${i}"><div class="flex-grow ml-4"><p class="text-sm font-black ${item.done ? 'text-gray-300 line-through' : ''}">${item.text}</p></div></div>`).join('');
             list.querySelectorAll('.ck-box').forEach(ck => ck.onchange = () => { privateChecklist[ck.dataset.idx].done = ck.checked; localStorage.setItem('BH_Check_v5', JSON.stringify(privateChecklist)); syncAndRender(); });
-            list.querySelectorAll('.edit-ck-btn').forEach(b => b.onclick = () => { editIndex = parseInt(b.dataset.idx); editItemType='check'; openModal(); });
-            list.querySelectorAll('.del-check').forEach(b => b.onclick = () => { privateChecklist.splice(parseInt(b.dataset.idx), 1); localStorage.setItem('BH_Check_v5', JSON.stringify(privateChecklist)); syncAndRender(); });
         }
 
         function renderNotes() {
@@ -390,10 +341,7 @@
                 const box = document.getElementById('is-split'); const pUI = document.getElementById('part-ui');
                 if(box) box.onchange = () => pUI.style.display = box.checked ? 'flex' : 'none';
                 if(pUI) pUI.querySelectorAll('.member-chip').forEach(c => c.onclick = () => c.classList.toggle('selected'));
-                if(editIndex !== -1) { let s = (editItemType === 'pub') ? publicSpendings[editIndex] : privateSpendings[editIndex]; document.getElementById('in-sp-title').value=s.title; document.getElementById('in-sp-cost').value=s.cost; document.getElementById('in-sp-payer').value=s.payer || currentUser; document.getElementById('is-split').checked = s.isSplit || false; pUI.style.display = s.isSplit ? 'flex' : 'none'; if(s.isSplit) pUI.querySelectorAll('.member-chip').forEach(c => c.classList.toggle('selected', s.parts?.includes(c.dataset.m))); }
-            } else if (currentPage === 'checklist') {
-                container.innerHTML = getInp('in-check-t', '物品名稱') + getInp('in-check-n', '備註');
-                if(editIndex !== -1) { document.getElementById('in-check-t').value = privateChecklist[editIndex].text; document.getElementById('in-check-n').value = privateChecklist[editIndex].note || ""; }
+                if(editIndex !== -1) { let s = publicSpendings[editIndex]; document.getElementById('in-sp-title').value=s.title; document.getElementById('in-sp-cost').value=s.cost; document.getElementById('in-sp-payer').value=s.payer || currentUser; document.getElementById('is-split').checked = s.isSplit || false; pUI.style.display = s.isSplit ? 'flex' : 'none'; if(s.isSplit) pUI.querySelectorAll('.member-chip').forEach(c => c.classList.toggle('selected', s.parts?.includes(c.dataset.m))); }
             } else if (currentPage === 'notes') {
                 container.innerHTML = getInp('in-nt-t', '攻略標題') + getInp('in-nt-l', '網址');
                 if(editIndex !== -1) { document.getElementById('in-nt-t').value = notes[editIndex].title; document.getElementById('in-nt-l').value = notes[editIndex].link; }
@@ -403,6 +351,7 @@
 
         function handleSave() {
             const getVal = (id) => document.getElementById(id) ? document.getElementById(id).value : "";
+            const formatTime = (v) => { let d = v.replace(/\D/g, '').padStart(4, '0'); return d.substring(0,2) + ":" + d.substring(2,4); };
             if (currentPage === 'itinerary') {
                 const entry = { title: getVal('in-title'), time: formatTime(getVal('in-time') || "0000"), type: getVal('in-type'), note: getVal('in-note'), address: getVal('in-address'), cost: parseInt(getVal('in-cost')) || 0 };
                 if (!tripData[currentDay-1]) tripData[currentDay-1] = {activities: []};
@@ -417,15 +366,7 @@
                     const entry = { day: currentDay, title, cost, payer, parts, whoPaid: existingWhoPaid, isSplit: true };
                     if (editIndex === -1) publicSpendings.push(entry); else publicSpendings[editIndex] = entry;
                     saveToCloud('publicSpend');
-                } else {
-                    const entry = { day: currentDay, title, cost, isSplit: false };
-                    if (editIndex === -1) privateSpendings.push(entry); else privateSpendings[editIndex] = entry;
-                    localStorage.setItem('BH_Spend_v5', JSON.stringify(privateSpendings)); syncAndRender();
                 }
-            } else if (currentPage === 'checklist') {
-                const t = getVal('in-check-t'), n = getVal('in-check-n');
-                if (editIndex === -1) privateChecklist.push({text: t, note: n, done: false}); else privateChecklist[editIndex] = {text: t, note: n, done: privateChecklist[editIndex].done};
-                localStorage.setItem('BH_Check_v5', JSON.stringify(privateChecklist)); syncAndRender();
             } else if (currentPage === 'notes') {
                 const t = getVal('in-nt-t'); if (editIndex === -1) notes.push({title: t, link: getVal('in-nt-l')}); else notes[editIndex] = {title: t, link: getVal('in-nt-l')};
                 saveToCloud('notes');
@@ -433,6 +374,9 @@
             document.getElementById('add-modal').classList.remove('active'); editIndex = -1;
         }
 
+        document.getElementById('config-btn').onclick = () => { document.getElementById('config-start-date').value = tripConfig.start; document.getElementById('config-end-date').value = tripConfig.end; document.getElementById('config-modal').classList.add('active'); };
+        document.getElementById('config-save-btn').onclick = () => { tripConfig.start = document.getElementById('config-start-date').value; tripConfig.end = document.getElementById('config-end-date').value; saveToCloud('config'); document.getElementById('config-modal').classList.remove('active'); location.reload(); };
+        document.getElementById('config-cancel-btn').onclick = () => document.getElementById('config-modal').classList.remove('active');
         document.getElementById('fab-add').onclick = openModal;
         document.getElementById('modal-save-btn').onclick = handleSave;
         document.getElementById('modal-cancel-btn').onclick = () => document.getElementById('add-modal').classList.remove('active');
