@@ -50,10 +50,11 @@
 
     <div id="user-overlay" class="fixed inset-0 bg-white z-[300] flex flex-col items-center p-10 hidden">
         <h2 class="text-3xl font-black mb-2 text-emerald-600 italic mt-10 text-center">你是哪位成員？</h2>
-        <p class="text-gray-400 text-xs font-bold mb-8 uppercase tracking-widest text-center">CHOOSE YOUR IDENTITY</p>
+        <p class="text-gray-400 text-xs font-bold mb-8 uppercase tracking-widest text-center">WHO ARE YOU TODAY?</p>
         <div id="user-selector-grid" class="grid grid-cols-1 gap-4 w-full max-w-xs overflow-y-auto mb-10 pb-10"></div>
         <div class="fixed bottom-10 left-0 right-0 px-10 flex flex-col items-center">
             <button id="add-member-btn" class="w-full py-4 bg-gray-100 text-gray-500 rounded-2xl font-black text-sm mb-4">+ 新增團員</button>
+            <p class="text-[10px] text-gray-300 font-bold text-center">點擊人名進入，點擊圖示編輯</p>
         </div>
     </div>
 
@@ -118,7 +119,7 @@
     <div id="summary-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm items-center justify-center p-6 hidden">
         <div class="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl max-h-[85vh] overflow-y-auto relative text-center">
             <button id="close-summary-btn" class="absolute top-6 right-6 text-gray-300 font-bold text-xl">✕</button>
-            <h2 class="text-xl font-black mb-6 text-emerald-600 italic">智慧結算建議 📊</h2>
+            <h2 class="text-xl font-black mb-6 text-emerald-600 italic text-center">精準帳務分析 📊</h2>
             <div id="summary-content" class="space-y-6 pb-4"></div>
         </div>
     </div>
@@ -141,8 +142,7 @@
         const DEFAULT_CHECKLIST = [
             { text: "護照、日幣、信用卡", note: "確認護照效期大於6個月", done: false },
             { text: "行動電源", note: "必須隨身！登機規定：嚴禁托運", done: false },
-            { text: "隨身液體規範", note: "單件<100ml，需透明拉鍊袋裝", done: false },
-            { text: "日本網卡 / eSIM", note: "先確認 QR Code 已取", done: false }
+            { text: "隨身液體規範", note: "單件<100ml，需透明拉鍊袋裝", done: false }
         ];
 
         let tripData = DATES.map((d, i) => ({ day: i+1, date: d, activities: [] }));
@@ -202,8 +202,8 @@
             grid.querySelectorAll('.user-pick').forEach(btn => btn.onclick = () => { localStorage.setItem('BH_User_v5', btn.dataset.user); currentUser = btn.dataset.user; syncAndRender(); });
             grid.querySelectorAll('.edit-mem').forEach(btn => btn.onclick = () => { 
                 const oldName = MEMBERS[btn.dataset.idx];
-                const n = prompt("更改團員名稱：", oldName); 
-                if(n && n.trim() !== "") { 
+                const n = prompt("更改名稱：", oldName); 
+                if(n && n.trim() !== "" && n.trim() !== oldName) { 
                     const newName = n.trim();
                     MEMBERS[btn.dataset.idx] = newName; 
                     if(currentUser === oldName) { currentUser = newName; localStorage.setItem('BH_User_v5', currentUser); }
@@ -219,7 +219,7 @@
             grid.querySelectorAll('.del-mem').forEach(btn => btn.onclick = () => { if(confirm(`確定刪除 ${MEMBERS[btn.dataset.idx]} 嗎？`)) { MEMBERS.splice(btn.dataset.idx, 1); if(currentUser === MEMBERS[btn.dataset.idx]) { localStorage.removeItem('BH_User_v5'); currentUser = null; } saveToCloud('members'); } });
         }
 
-        document.getElementById('add-member-btn').onclick = () => { const n = prompt("新成員名稱："); if(n) { MEMBERS.push(n.trim()); saveToCloud('members'); } };
+        document.getElementById('add-member-btn').onclick = () => { const n = prompt("新成員名稱："); if(n && n.trim()!=="") { MEMBERS.push(n.trim()); saveToCloud('members'); } };
 
         function renderDayTabs() {
             const nav = document.getElementById('day-tabs-nav');
@@ -388,38 +388,30 @@
             } catch(e) { alert("儲存失敗"); }
         }
 
-        // --- 核心優化：對人 Pairwise 結算法 ---
+        // --- 核心優化：對人分組式結算 ---
         function showExpenseSummary() {
             const content = document.getElementById('summary-content');
-            
-            // 建立 2D 債務矩陣：debtMatrix[借款人][代墊人]
             const debtMatrix = {};
             MEMBERS.forEach(borrower => {
                 debtMatrix[borrower] = {};
                 MEMBERS.forEach(payer => debtMatrix[borrower][payer] = 0);
             });
 
-            // 掃描所有未付帳目
             publicSpendings.forEach(s => {
                 const whoPaid = s.whoPaid || [];
                 const perCost = s.cost / (s.parts.length || 1);
                 s.parts.forEach(m => {
-                    // 如果這個人不是代墊人，且還沒對這筆帳單打勾
                     if (m !== s.payer && !whoPaid.includes(m)) {
                         debtMatrix[m][s.payer] += perCost;
                     }
                 });
             });
 
-            // 進行兩兩相消 (例如 A 欠 B 100, B 欠 A 40 -> A 欠 B 60)
             const suggestions = [];
             for (let i = 0; i < MEMBERS.length; i++) {
                 for (let j = i + 1; j < MEMBERS.length; j++) {
-                    const m1 = MEMBERS[i];
-                    const m2 = MEMBERS[j];
-                    const m1OwesM2 = debtMatrix[m1][m2];
-                    const m2OwesM1 = debtMatrix[m2][m1];
-
+                    const m1 = MEMBERS[i], m2 = MEMBERS[j];
+                    const m1OwesM2 = debtMatrix[m1][m2], m2OwesM1 = debtMatrix[m2][m1];
                     if (m1OwesM2 > m2OwesM1) {
                         const net = m1OwesM2 - m2OwesM1;
                         if (net > 0.5) suggestions.push({ from: m1, to: m2, amount: Math.round(net) });
@@ -430,38 +422,56 @@
                 }
             }
 
-            // 我的狀態統計
-            let myTotalOwe = 0;
-            let myTotalGet = 0;
+            // 按「借款人 (From)」進行分組
+            const grouped = {};
+            suggestions.forEach(s => {
+                if (!grouped[s.from]) grouped[s.from] = [];
+                grouped[s.from].push(s);
+            });
+
+            let myTotalOwe = 0, myTotalGet = 0;
             suggestions.forEach(s => {
                 if (s.from === currentUser) myTotalOwe += s.amount;
                 if (s.to === currentUser) myTotalGet += s.amount;
             });
             const myNet = myTotalGet - myTotalOwe;
 
-            content.innerHTML = `
+            let html = `
                 <div>
-                    <h3 class="text-xs font-black text-gray-400 mb-3 uppercase tracking-wider text-center">我的目前狀態 (正=應收, 負=應付)</h3>
-                    <div class="bg-gray-50 p-6 rounded-3xl mb-6">
+                    <h3 class="text-xs font-black text-gray-400 mb-3 uppercase tracking-wider">我的目前狀態 (正=應收, 負=應付)</h3>
+                    <div class="bg-gray-50 p-6 rounded-3xl mb-8">
                         <p class="text-3xl font-black ${myNet >= 0 ? 'text-emerald-600' : 'text-red-400'}">
                             ${myNet > 0 ? '+' : ''}${myNet.toLocaleString()}
                         </p>
                         <p class="text-[10px] text-gray-400 mt-2 font-bold uppercase tracking-widest">${currentUser} 的帳目結餘</p>
                     </div>
                 </div>
-                <div class="pt-2">
-                    <h3 class="text-xs font-black text-emerald-600 mb-3 uppercase tracking-wider text-center">💰 直覺還錢路徑 (不跨人抵銷)</h3>
-                    <div class="space-y-2">
-                        ${suggestions.map(s => `
-                            <div class="flex items-center justify-between bg-emerald-50/50 border border-emerald-100 p-4 rounded-2xl shadow-sm text-left">
-                                <span class="font-bold text-gray-700 text-sm">${s.from} <span class="text-gray-300 mx-1">➜</span> ${s.to}</span>
-                                <span class="font-black text-emerald-600 text-sm">¥${s.amount.toLocaleString()}</span>
+                <div class="space-y-6 text-left">
+                    <h3 class="text-xs font-black text-emerald-600 mb-3 uppercase tracking-wider text-center">💰 團員還錢路徑 (按人分組)</h3>`;
+
+            const debtors = Object.keys(grouped);
+            if (debtors.length === 0) {
+                html += '<p class="text-center text-gray-300 py-8 italic text-sm">恭喜！目前全團帳目已結清。🌸</p>';
+            } else {
+                debtors.forEach(debtor => {
+                    html += `
+                        <div class="bg-gray-50/50 rounded-[2rem] p-5 border border-gray-100">
+                            <h4 class="text-xs font-black text-gray-400 mb-4 px-2 uppercase italic">${debtor} 需要支付：</h4>
+                            <div class="space-y-2">
+                                ${grouped[debtor].map(s => `
+                                    <div class="flex items-center justify-between bg-white border border-gray-100 p-4 rounded-2xl shadow-sm">
+                                        <span class="font-bold text-gray-700 text-sm">➜ ${s.to}</span>
+                                        <span class="font-black text-emerald-600 text-sm">¥${s.amount.toLocaleString()}</span>
+                                    </div>
+                                `).join('')}
                             </div>
-                        `).join('') || '<p class="text-center text-gray-300 py-8 italic text-sm">恭喜！目前全團帳目已結清。🌸</p>'}
-                    </div>
-                </div>
-                <p class="text-[9px] text-gray-300 mt-6 leading-relaxed">※ 此表嚴格遵循「卡片上的代墊人」進行統計。<br>結算完成後請至分帳頁面勾選已付，債務即會消失。</p>
-            `;
+                        </div>
+                    `;
+                });
+            }
+
+            html += `</div><p class="text-[9px] text-gray-300 mt-8 leading-relaxed text-center">※ 此表僅統計尚未「打勾」的項目。<br>結算後請至分帳頁面勾選已付，路徑即會消失。</p>`;
+            content.innerHTML = html;
             document.getElementById('summary-modal').classList.add('active');
         }
 
@@ -473,7 +483,7 @@
         document.getElementById('nav-checklist').onclick = () => { currentPage = 'checklist'; syncAndRender(); };
         document.getElementById('nav-budget').onclick = () => { currentPage = 'budget'; syncAndRender(); };
         document.getElementById('nav-notes').onclick = () => { currentPage = 'notes'; syncAndRender(); };
-        document.getElementById('weather-btn').onclick = () => { location.href = "https" + "://tenki.jp/forecast/6/"; };
+        document.getElementById('weather-btn').onclick = () => { location.href = "https://tenki.jp/forecast/6/"; };
         document.getElementById('route-map-btn').onclick = () => {
             if (currentPage === 'itinerary') {
                 const acts = tripData[currentDay-1]?.activities || [];
